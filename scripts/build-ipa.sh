@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build an unsigned IPA package for SideStore / AltStore sideloading on macOS.
+# Build a robust unsigned IPA package for SideStore / Sideloadly on macOS.
 set -e
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -12,28 +12,38 @@ echo "==> Fetching Flutter dependencies..."
 flutter pub get
 
 echo "==> Ensuring iOS platform files exist..."
-flutter create --platforms=ios .
+flutter create --platforms=ios --org com.runmon .
 
 echo "==> Generating launcher icons..."
 dart run flutter_launcher_icons
 
-PLIST_PATH="ios/Runner/Info.plist"
-if ! grep -q "NSCameraUsageDescription" "$PLIST_PATH"; then
-  echo "==> Injecting NSCameraUsageDescription into Info.plist..."
-  sed -i '' '/<dict>/a\
-  <key>NSCameraUsageDescription</key>\
-  <string>RunMon requires camera access to scan server QR codes for pairing.</string>
-  ' "$PLIST_PATH"
+echo "==> Updating Info.plist safely with PlistBuddy..."
+PLIST="ios/Runner/Info.plist"
+/usr/libexec/PlistBuddy -c "Delete :NSCameraUsageDescription" "$PLIST" 2>/dev/null || true
+/usr/libexec/PlistBuddy -c "Add :NSCameraUsageDescription string 'RunMon requires camera access to scan server QR codes for pairing.'" "$PLIST"
+
+echo "==> Setting deployment target to iOS 13.0..."
+sed -i '' "s/# platform :ios, '12.0'/platform :ios, '13.0'/g" ios/Podfile || true
+sed -i '' "s/platform :ios, '12.0'/platform :ios, '13.0'/g" ios/Podfile || true
+
+echo "==> Installing CocoaPods..."
+cd ios
+pod install --repo-update
+cd ..
+
+echo "==> Building Flutter iOS Archive (Release)..."
+flutter build ipa --release --no-codesign
+
+echo "==> Packaging into RunMon.ipa..."
+APP_PATH="build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app"
+if [ ! -d "$APP_PATH" ]; then
+  APP_PATH="build/ios/iphoneos/Runner.app"
 fi
 
-echo "==> Building iOS Release without codesign..."
-flutter build ios --release --no-codesign
-
-echo "==> Packaging into RunMon.ipa for SideStore..."
 rm -rf Payload RunMon.ipa
 mkdir -p Payload
-cp -r build/ios/iphoneos/Runner.app Payload/
-zip -r RunMon.ipa Payload/
+cp -r "$APP_PATH" Payload/
+zip -r -9 RunMon.ipa Payload/
 rm -rf Payload
 
-echo "==> SUCCESS! IPA package generated at: $APP_DIR/RunMon.ipa"
+echo "==> SUCCESS! Clean IPA package generated at: $APP_DIR/RunMon.ipa"
