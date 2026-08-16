@@ -7,6 +7,7 @@ on:
       - main
     paths:
       - 'app/**'
+      - '.github/workflows/build-ipa.yml'
 
 jobs:
   build-ipa:
@@ -21,35 +22,42 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Install dependencies and generate iOS project
-        working-directory: ./app
+      - name: Prepare Flutter and iOS Project
+        working_directory: ./app
         run: |
           flutter pub get
-          flutter create --platforms=ios .
+          flutter create --platforms=ios --org com.runmon .
           dart run flutter_launcher_icons
-          
-          # Inject Camera usage description for mobile_scanner into Info.plist
-          PLIST_PATH="ios/Runner/Info.plist"
-          if grep -q "NSCameraUsageDescription" "$PLIST_PATH"; then
-            echo "NSCameraUsageDescription already present."
-          else
-            sed -i '' '/<dict>/a\
-            <key>NSCameraUsageDescription</key>\
-            <string>RunMon requires camera access to scan server QR codes for pairing.</string>
-            ' "$PLIST_PATH"
+
+          # Safely update Info.plist using PlistBuddy
+          PLIST="ios/Runner/Info.plist"
+          /usr/libexec/PlistBuddy -c "Delete :NSCameraUsageDescription" "$PLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :NSCameraUsageDescription string 'RunMon requires camera access to scan server QR codes for pairing.'" "$PLIST"
+
+          # Ensure iOS deployment target 13.0
+          sed -i '' "s/# platform :ios, '12.0'/platform :ios, '13.0'/g" ios/Podfile || true
+          sed -i '' "s/platform :ios, '12.0'/platform :ios, '13.0'/g" ios/Podfile || true
+
+          cd ios
+          pod install --repo-update
+          cd ..
+
+      - name: Build Flutter iOS Release Archive
+        working_directory: ./app
+        run: |
+          flutter build ipa --release --no-codesign
+
+      - name: Package .app into .ipa for SideStore / Sideloadly
+        working_directory: ./app
+        run: |
+          APP_PATH="build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app"
+          if [ ! -d "$APP_PATH" ]; then
+            APP_PATH="build/ios/iphoneos/Runner.app"
           fi
 
-      - name: Build iOS App (.app bundle without code signing)
-        working-directory: ./app
-        run: |
-          flutter build ios --release --no-codesign
-
-      - name: Package .app into .ipa for SideStore / AltStore sideloading
-        working-directory: ./app
-        run: |
           mkdir -p Payload
-          cp -r build/ios/iphoneos/Runner.app Payload/
-          zip -r RunMon.ipa Payload/
+          cp -r "$APP_PATH" Payload/
+          zip -r -9 RunMon.ipa Payload/
           rm -rf Payload
 
       - name: Upload IPA Artifact
