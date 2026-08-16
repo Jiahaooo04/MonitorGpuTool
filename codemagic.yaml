@@ -1,0 +1,41 @@
+workflows:
+  ios-build:
+    name: Build RunMon iOS IPA
+    max_build_duration: 30
+    instance_type: mac_mini_m1
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Set up Flutter and iOS project
+        working_directory: app
+        script: |
+          flutter pub get
+          flutter create --platforms=ios .
+          dart run flutter_launcher_icons
+
+          # Add Camera permission to Info.plist if not present
+          PLIST_PATH="ios/Runner/Info.plist"
+          if ! grep -q "NSCameraUsageDescription" "$PLIST_PATH"; then
+            sed -i '' '/<dict>/a\
+            <key>NSCameraUsageDescription</key>\
+            <string>RunMon requires camera access to scan server QR codes.</string>
+            ' "$PLIST_PATH"
+          fi
+
+      - name: Build iOS app (unsigned)
+        working_directory: app
+        script: |
+          flutter build ios --release --no-codesign
+
+      - name: Package .app into .ipa for sideloading
+        working_directory: app
+        script: |
+          mkdir -p Payload
+          cp -r build/ios/iphoneos/Runner.app Payload/
+          zip -r RunMon.ipa Payload/
+          rm -rf Payload
+
+    artifacts:
+      - app/RunMon.ipa
