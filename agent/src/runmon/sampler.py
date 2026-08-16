@@ -1,0 +1,134 @@
+from __future__ import annotations
+
+import time
+from dataclasses import dataclass
+
+import psutil
+
+try:
+    import pynvml
+    pynvml.nvmlInit()
+    _NVML = True
+except Exception:
+    _NVML = False
+
+
+@dataclass
+class GpuSample:
+    index: int
+    util_pct: int
+    mem_used_mb: int
+    mem_total_mb: int
+    temp_c: int
+    pids: dict[int, int]
+
+
+@dataclass
+class ProcessSample:
+    pid: int
+    user: str
+    name: str
+    cpu_pct: float
+    mem_used_mb: int
+    mem_pct: float
+
+
+# pid -> (进程创建时间, 上次采样的单调时钟, 上次累计 CPU 秒数)。
+# 自己计算差值,这样多核进程可以像 top 一样显示超过 100%。
+_PROCESS_CPU: dict[int, tuple[float, float, float]] = {}
+
+
+def gpu_available() -> bool:
+    return _NVML
+
+
+def sample_gpus() -> list[GpuSample]:
+    if not _NVML:
+        return []
+    out: list[GpuSample] = []
+    try:
+        for i in range(pynvml.nvmlDeviceGetCount()):
+            h = pynvml.nvmlDeviceGetHandleByIndex(i)
+            util = pynvml.nvmlDeviceGetUtilizationRates(h).gpu
+            mem = pynvml.nvmlDeviceGetMemoryInfo(h)
+            temp = pynvml.nvmlDeviceGetTemperature(h, pynvml.NVML_TEMPERATURE_GPU)
+            pids: dict[int, int] = {}
+            for fn in (pynvml.nvmlDeviceGetComputeRunningProcesses,
+                       pynvml.nvmlDeviceGetGraphicsRunningProcesses):
+                try:
+                    for p in fn(h):
+                        pids[p.pid] = (p.usedGpuMemory or 0) // (1024 * 1024)
+                except Exception:
+                    pass
+            out.append(GpuSample(i, util, mem.used // (1024 * 1024),
+                                 mem.total // (1024 * 1024), temp, pids))
+    except Exception:
+        return out
+    return out
+
+
+def sample_processes(pids: set[int]) -> dict[int, ProcessSample]:
+    """采集 GPU PID 的安全摘要;不读取命令行和环境变量。"""
+    now = time.monotonic()
+    out: dict[int, ProcessSample] = {}
+    for pid in sorted(pids):
+        try:
+            process = psutil.Process(pid)
+            created_at = process.create_time()
+            cpu_times = process.cpu_times()
+            cpu_total = float(cpu_times.user + cpu_times.system)
+            previous = _PROCESS_CPU.get(pid)
+            cpu_pct = 0.0
+            if previous is not None and previous[0] == created_at:
+                elapsed = now - previous[1]
+                if elapsed > 0:
+                    cpu_pct = max(0.0, (cpu_total - previous[2]) / elapsed * 100)
+            _PROCESS_CPU[pid] = (created_at, now, cpu_total)
+            out[pid] = ProcessSample(
+                pid=pid,
+                user=process.username(),
+                name=process.name(),
+                cpu_pct=round(cpu_pct, 1),
+                mem_used_mb=process.memory_info().rss // (1024 * 1024),
+                mem_pct=round(float(process.memory_percent()), 1),
+            )
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+            _PROCESS_CPU.pop(pid, None)
+
+    for stale_pid in set(_PROCESS_CPU) - pids:
+        _PROCESS_CPU.pop(stale_pid, None)
+    return out
+
+
+def util_for_pids(samples: list[GpuSample], pids: set[int]) -> float | None:
+    hosts = [s for s in samples if pids & set(s.pids)]
+    if not hosts:
+        return None
+    return float(max(s.util_pct for s in hosts))
+
+
+def util_for_indices(samples: list[GpuSample], indices: set[int]) -> float | None:
+    hosts = [s for s in samples if s.index in indices]
+    if not hosts:
+        return None
+    return float(max(s.util_pct for s in hosts))
+
+
+def process_tree(root_pid: int) -> set[int]:
+    try:
+        p = psutil.Process(root_pid)
+        return {root_pid} | {c.pid for c in p.children(recursive=True)}
+    except psutil.NoSuchProcess:
+        return set()
+
+
+def disk_usage() -> list[tuple[str, float]]:
+    out: list[tuple[str, float]] = []
+    for part in psutil.disk_partitions(all=False):
+        if "ro" in part.opts.split(","):
+            continue  # 只读卷(macOS 封印卷/模拟器镜像)天然近满,非用户磁盘
+        try:
+            out.append((part.mountpoint, psutil.disk_usage(part.mountpoint).percent))
+        except OSError:
+            continue
+    return out
