@@ -8,34 +8,50 @@ workflows:
       xcode: latest
       cocoapods: default
     scripts:
-      - name: Set up Flutter and iOS project
+      - name: Prepare Flutter and iOS Project
         working_directory: app
         script: |
+          # 1. Ensure Flutter dependencies and iOS platform files
           flutter pub get
-          flutter create --platforms=ios .
+          flutter create --platforms=ios --org com.runmon .
           dart run flutter_launcher_icons
 
-          # Add Camera permission to Info.plist if not present
-          PLIST_PATH="ios/Runner/Info.plist"
-          if ! grep -q "NSCameraUsageDescription" "$PLIST_PATH"; then
-            sed -i '' '/<dict>/a\
-            <key>NSCameraUsageDescription</key>\
-            <string>RunMon requires camera access to scan server QR codes.</string>
-            ' "$PLIST_PATH"
+          # 2. Safely add NSCameraUsageDescription to Info.plist using PlistBuddy (no XML corruption)
+          PLIST="ios/Runner/Info.plist"
+          /usr/libexec/PlistBuddy -c "Delete :NSCameraUsageDescription" "$PLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :NSCameraUsageDescription string 'RunMon requires camera access to scan server QR codes for pairing.'" "$PLIST"
+
+          # 3. Update Podfile deployment target to 13.0 for modern plugin compatibility
+          sed -i '' "s/# platform :ios, '12.0'/platform :ios, '13.0'/g" ios/Podfile || true
+          sed -i '' "s/platform :ios, '12.0'/platform :ios, '13.0'/g" ios/Podfile || true
+
+          # 4. Install CocoaPods dependencies
+          cd ios
+          pod install --repo-update
+          cd ..
+
+      - name: Build Flutter iOS Release Archive
+        working_directory: app
+        script: |
+          # Build full archive without codesigning
+          flutter build ipa --release --no-codesign
+
+      - name: Package into Sideloadable IPA
+        working_directory: app
+        script: |
+          # Locate the built Runner.app from xcarchive or build directory
+          APP_PATH="build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app"
+          if [ ! -d "$APP_PATH" ]; then
+            APP_PATH="build/ios/iphoneos/Runner.app"
           fi
 
-      - name: Build iOS app (unsigned)
-        working_directory: app
-        script: |
-          flutter build ios --release --no-codesign
-
-      - name: Package .app into .ipa for sideloading
-        working_directory: app
-        script: |
+          echo "Packaging from: $APP_PATH"
+          rm -rf Payload RunMon.ipa
           mkdir -p Payload
-          cp -r build/ios/iphoneos/Runner.app Payload/
-          zip -r RunMon.ipa Payload/
+          cp -r "$APP_PATH" Payload/
+          zip -r -9 RunMon.ipa Payload/
           rm -rf Payload
+          echo "IPA packaging completed successfully."
 
     artifacts:
       - app/RunMon.ipa
