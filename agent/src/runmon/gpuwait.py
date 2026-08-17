@@ -263,11 +263,44 @@ class GpuWatchManager:
         import os
         import subprocess
         import sys
+        import time
+        from pathlib import Path
+        from .store import data_dir
+
         env = dict(os.environ)
         env["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # 让 CUDA 编号与 nvidia-smi 一致
-        env["CUDA_VISIBLE_DEVICES"] = idx
+        if idx:
+            env["CUDA_VISIBLE_DEVICES"] = idx
+
+        # 使用业界主流方案: 生成隔离独立的 runner 脚本，确保 100% 还原用户完整终端环境
+        script_dir = data_dir() / "scripts"
+        script_dir.mkdir(parents=True, exist_ok=True)
+        script_file = script_dir / f"launch_{int(time.time())}_{os.getpid()}.sh"
+
+        script_content = f"""#!/usr/bin/env bash
+# 1. 完整加载系统环境与用户 Profile
+[ -f /etc/profile ] && . /etc/profile 2>/dev/null
+[ -f ~/.profile ] && . ~/.profile 2>/dev/null
+[ -f ~/.bash_profile ] && . ~/.bash_profile 2>/dev/null
+[ -f ~/.bashrc ] && . ~/.bashrc 2>/dev/null
+
+# 2. 多路径探测并加载 Conda 核心函数
+for _d in "$HOME/miniconda3" "$HOME/anaconda3" "$HOME/miniconda" "$HOME/anaconda" "/opt/conda" "/root/miniconda3" "/root/anaconda3" "$HOME/.conda"; do
+    if [ -f "$_d/etc/profile.d/conda.sh" ]; then
+        . "$_d/etc/profile.d/conda.sh"
+        break
+    fi
+done
+[ -z "$CONDA_PREFIX" ] && (eval "$(conda shell.bash hook 2>/dev/null)" 2>/dev/null || true)
+
+# 3. 顺序执行用户指令
+{command}
+"""
+        script_file.write_text(script_content, encoding="utf-8")
+        script_file.chmod(0o755)
+
         argv = [sys.executable, "-m", "runmon", "run", "--name", name or "预约任务",
-                "--gpu", idx, "--", "bash", "-ic", command]
+                "--gpu", idx, "--", "bash", "-l", str(script_file)]
         try:
             subprocess.Popen(argv, cwd=os.path.expanduser("~"), env=env,
                              start_new_session=True, stdin=subprocess.DEVNULL,
