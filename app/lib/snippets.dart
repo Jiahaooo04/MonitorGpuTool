@@ -45,14 +45,18 @@ class CommandSnippet {
     final env = condaEnv.trim();
     var cmd = command.trim();
 
+    // 1. 如果指定了工作目录: cd 到对应目录
     if (dir.isNotEmpty) {
       parts.add('cd ${dir.contains(' ') ? '"$dir"' : dir}');
     }
 
+    // 2. 环境初始化: 模拟终端打开时的环境，确保自动加载 conda 及对应环境 (未填则默认激活 base)
     if (env.isNotEmpty) {
-      // Robust conda activation for bash login/non-login subshells
       parts.add(
-          '(eval "\$(conda shell.bash hook 2>/dev/null)" || source "\$(conda info --base 2>/dev/null)/etc/profile.d/conda.sh" 2>/dev/null || true) && conda activate $env');
+          '(eval "\$(conda shell.bash hook 2>/dev/null)" || source "\$(conda info --base 2>/dev/null)/etc/profile.d/conda.sh" 2>/dev/null || source "\$HOME/miniconda3/etc/profile.d/conda.sh" 2>/dev/null || source "\$HOME/anaconda3/etc/profile.d/conda.sh" 2>/dev/null || true) && conda activate $env');
+    } else {
+      parts.add(
+          '(eval "\$(conda shell.bash hook 2>/dev/null)" || source "\$(conda info --base 2>/dev/null)/etc/profile.d/conda.sh" 2>/dev/null || source "\$HOME/miniconda3/etc/profile.d/conda.sh" 2>/dev/null || source "\$HOME/anaconda3/etc/profile.d/conda.sh" 2>/dev/null || true) && (conda activate base 2>/dev/null || true)');
     }
 
     if (cmd.isNotEmpty) {

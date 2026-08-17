@@ -356,74 +356,83 @@ class _SnippetEditSheetState extends State<_SnippetEditSheet> {
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-    return SafeArea(
-      child: Padding(
-        padding: EdgeInsets.only(bottom: bottomInset),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    _isEdit ? '编辑信息块' : '新建命令信息块',
-                    style: sans(
-                      size: 18,
-                      weight: FontWeight.w700,
-                      spacing: -0.3,
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.only(bottom: bottomInset),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      _isEdit ? '编辑信息块' : '新建命令信息块',
+                      style: sans(
+                        size: 18,
+                        weight: FontWeight.w700,
+                        spacing: -0.3,
+                      ),
                     ),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.close, color: Rm.inkSoft),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              const SectionLabel('信息块名称'),
-              TextField(
-                controller: _nameCtrl,
-                style: sans(size: 14),
-                decoration: _inputDeco('例如: 训练 ResNet50 / 跑测试脚本'),
-              ),
-              const SizedBox(height: 12),
-              const SectionLabel('Conda 环境名称 (可选)'),
-              TextField(
-                controller: _envCtrl,
-                style: mono(size: 13, color: Rm.ink),
-                decoration: _inputDeco('例如: pytorch2 / base (留空则不激活)'),
-              ),
-              const SizedBox(height: 12),
-              const SectionLabel('工作目录文件夹 (可选)'),
-              TextField(
-                controller: _dirCtrl,
-                style: mono(size: 13, color: Rm.ink),
-                decoration: _inputDeco('例如: ~/project/train (留空则在默认目录)'),
-              ),
-              const SizedBox(height: 12),
-              const SectionLabel('命令行代码'),
-              TextField(
-                controller: _cmdCtrl,
-                style: mono(size: 13, color: Rm.ink),
-                maxLines: 2,
-                decoration: _inputDeco('例如: python train.py --batch 64'),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                '执行时将自动组合: cd 工作目录 -> conda activate 环境 -> 执行命令行代码。',
-                style: sans(size: 11.5, color: Rm.inkFaint, height: 1.4),
-              ),
-              const SizedBox(height: 20),
-              Center(
-                child: PushButton(
-                  label: _isEdit ? '保存修改' : '确认添加',
-                  icon: Icons.check,
-                  onPressed: _save,
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Rm.inkSoft),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
                 ),
-              ),
-            ],
+                const SizedBox(height: 14),
+                const SectionLabel('信息块名称'),
+                TextField(
+                  controller: _nameCtrl,
+                  textInputAction: TextInputAction.next,
+                  style: sans(size: 14),
+                  decoration: _inputDeco('例如: 训练 ResNet50'),
+                ),
+                const SizedBox(height: 12),
+                const SectionLabel('Conda 环境名称 (可选)'),
+                TextField(
+                  controller: _envCtrl,
+                  textInputAction: TextInputAction.next,
+                  style: mono(size: 13, color: Rm.ink),
+                  decoration: _inputDeco('例如: pytorch2'),
+                ),
+                const SizedBox(height: 12),
+                const SectionLabel('工作目录文件夹 (可选)'),
+                TextField(
+                  controller: _dirCtrl,
+                  textInputAction: TextInputAction.next,
+                  style: mono(size: 13, color: Rm.ink),
+                  decoration: _inputDeco('例如: ~/project/train'),
+                ),
+                const SizedBox(height: 12),
+                const SectionLabel('命令行代码'),
+                TextField(
+                  controller: _cmdCtrl,
+                  textInputAction: TextInputAction.done,
+                  onEditingComplete: () => FocusScope.of(context).unfocus(),
+                  style: mono(size: 13, color: Rm.ink),
+                  maxLines: 2,
+                  decoration: _inputDeco('例如: python train.py'),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  '执行时将自动组合: cd 工作目录 -> conda activate 环境 -> 执行命令行代码。',
+                  style: sans(size: 11.5, color: Rm.inkFaint, height: 1.4),
+                ),
+                const SizedBox(height: 20),
+                Center(
+                  child: PushButton(
+                    label: _isEdit ? '保存修改' : '确认添加',
+                    icon: Icons.check,
+                    onPressed: _save,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
