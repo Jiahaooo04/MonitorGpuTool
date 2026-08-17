@@ -44,10 +44,10 @@ class CommandSnippet {
     final env = condaEnv.trim();
     var cmd = command.trim();
 
-    // 1. 确保 conda bin 加入 PATH，并加载 profile.d/conda.sh 注册 conda 函数
-    parts.add('for _b in "\$HOME/miniconda3/bin" "\$HOME/anaconda3/bin" "\$HOME/miniconda/bin" "\$HOME/anaconda/bin" "/opt/conda/bin" "/root/miniconda3/bin" "/root/anaconda3/bin"; do [ -d "\$_b" ] && export PATH="\$_b:\$PATH" && break; done; for _d in "\$HOME/miniconda3" "\$HOME/anaconda3" "\$HOME/miniconda" "\$HOME/anaconda" "/opt/conda" "/root/miniconda3" "/root/anaconda3" "\$HOME/.conda"; do [ -f "\$_d/etc/profile.d/conda.sh" ] && . "\$_d/etc/profile.d/conda.sh" && break; done');
+    // 1. 定义并执行 conda 初始化函数 (确保退出码始终为 0，防止循环末尾返回 1 导致 && 链熔断)
+    parts.add('_init_conda() { for _b in "\$HOME/miniconda3/bin" "\$HOME/anaconda3/bin" "\$HOME/miniconda/bin" "\$HOME/anaconda/bin" "/opt/conda/bin" "/root/miniconda3/bin" "/root/anaconda3/bin"; do if [ -d "\$_b" ]; then export PATH="\$_b:\$PATH"; break; fi; done; for _d in "\$HOME/miniconda3" "\$HOME/anaconda3" "\$HOME/miniconda" "\$HOME/anaconda" "/opt/conda" "/root/miniconda3" "/root/anaconda3" "\$HOME/.conda"; do if [ -f "\$_d/etc/profile.d/conda.sh" ]; then . "\$_d/etc/profile.d/conda.sh"; break; fi; done; if command -v conda >/dev/null 2>&1; then eval "\$(conda shell.bash hook 2>/dev/null)" || true; fi; return 0; }; _init_conda');
 
-    // 2. 激活环境 (若指定特定环境则激活，若未指定则激活 base)
+    // 2. 激活目标环境 (若指定特定环境则激活，若未指定则激活 base)
     if (env.isNotEmpty) {
       parts.add('(conda activate $env || source activate $env || true)');
     } else {
