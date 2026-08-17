@@ -53,7 +53,10 @@ class CommandSnippet {
     initParts.add('[ -f ~/anaconda/etc/profile.d/conda.sh ] && . ~/anaconda/etc/profile.d/conda.sh');
     initParts.add('eval "\$(conda shell.bash hook 2>/dev/null)"');
 
-    // 2. 激活环境 (优先激活指定环境，若未指定则激活 base)
+    // 2. 智能注入 Hugging Face 国内镜像加速 (若用户未自定义则默认使用 hf-mirror.com)
+    initParts.add('export HF_ENDPOINT="\${HF_ENDPOINT:-https://hf-mirror.com}"');
+
+    // 3. 激活环境 (优先激活指定环境，若未指定则激活 base)
     if (env.isNotEmpty) {
       initParts.add('conda activate $env');
     } else {
