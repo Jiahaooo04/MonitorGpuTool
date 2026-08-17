@@ -5,7 +5,7 @@ from dataclasses import dataclass
 
 TQDM_RE = re.compile(r"(\d+)%\|[^|]*\|\s*(\d+)/(\d+)(?:\s*\[([\d:]+)<([\d:]+)[^\]]*\])?")
 EPOCH_RE = re.compile(r"[Ee]poch[\s:=\[]*(\d+)\s*/\s*(\d+)")
-LOSS_RE = re.compile(r"\bloss[\s:=]+([0-9]*\.?[0-9]+(?:[eE][+-]?[0-9]+)?)")
+LOSS_RE = re.compile(r"\b(?:train_?loss|total_?loss|val_?loss|loss)[\s:=]+([0-9]*\.?[0-9]+(?:[eE][+-]?[0-9]+)?)", re.IGNORECASE)
 
 
 def parse_eta(text: str) -> int | None:

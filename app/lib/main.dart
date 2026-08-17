@@ -5,15 +5,17 @@ import 'pages/events_page.dart';
 import 'pages/pair_page.dart';
 import 'pages/settings_page.dart';
 import 'pages/runs_page.dart';
+import 'pages/snippets_page.dart';
 import 'settings.dart';
+import 'snippets.dart';
 import 'state.dart';
 import 'ui.dart';
-import 'update.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   appState.init();
   appSettings.load();
+  snippetStore.load();
   initNotifications();
   runApp(const RunMonApp());
 }
@@ -41,15 +43,6 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   String? _shownNotice;
-
-  @override
-  void initState() {
-    super.initState();
-    // 启动时静默检查更新:有新版才弹窗,已是最新/出错都不打扰
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) checkAndPrompt(context, silent: true);
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -91,6 +84,14 @@ class _HomePageState extends State<HomePage> {
               ],
             ),
             actions: [
+              IconButton(
+                tooltip: '命令库',
+                icon: const Icon(Icons.menu_book_rounded),
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const SnippetsPage()),
+                ),
+              ),
               IconButton(
                 tooltip: '事件',
                 icon: const Icon(Icons.notifications_none_rounded),

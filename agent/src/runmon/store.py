@@ -205,7 +205,7 @@ class RunStore:
                                (str(channel_key), payload))
             self._conn.commit()
 
-    def prune_old(self, now: float, outbox_days: int = 7, event_days: int = 30) -> None:
+    def prune_old(self, now: float, outbox_days: int = 7, event_days: int = 7, log_days: int = 7) -> None:
         with self._lock:
             self._conn.execute(
                 "DELETE FROM outbox WHERE delivered_at IS NOT NULL AND delivered_at < ?",
@@ -213,6 +213,21 @@ class RunStore:
             self._conn.execute("DELETE FROM events WHERE ts < ?",
                                (now - event_days * 86400,))
             self._conn.commit()
+
+        # 定时清理超过保留期 (默认 7 天) 的已结束任务日志与环境快照文件，防止磁盘堆积
+        try:
+            from .config import data_dir
+            log_dir = data_dir() / "logs"
+            if log_dir.exists():
+                cutoff = now - log_days * 86400
+                for f in log_dir.iterdir():
+                    if f.is_file() and (f.suffix in {".log", ".json"} or f.name.endswith(".log")) and f.stat().st_mtime < cutoff:
+                        try:
+                            f.unlink()
+                        except OSError:
+                            pass
+        except Exception:
+            pass
 
     def outbox_pending(self, now: float | None) -> list[sqlite3.Row]:
         with self._lock:

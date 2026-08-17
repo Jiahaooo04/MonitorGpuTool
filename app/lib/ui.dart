@@ -231,7 +231,7 @@ class StatusPill extends StatelessWidget {
   }
 }
 
-/// 圆角进度条。
+/// Rich 风格圆角渐变进度条 (支持平滑补间动画与状态色彩渐变)。
 class RmProgress extends StatelessWidget {
   final double? value; // 0~1
   final Color color;
@@ -240,18 +240,67 @@ class RmProgress extends StatelessWidget {
     super.key,
     required this.value,
     required this.color,
-    this.height = 7,
+    this.height = 7.5,
   });
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(height / 2),
-      child: LinearProgressIndicator(
-        value: value,
-        minHeight: height,
-        backgroundColor: Rm.paper2,
-        valueColor: AlwaysStoppedAnimation(color),
+    if (value == null) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(height / 2),
+        child: LinearProgressIndicator(
+          minHeight: height,
+          backgroundColor: Rm.paper3,
+          valueColor: AlwaysStoppedAnimation(color),
+        ),
+      );
+    }
+
+    final clamped = value!.clamp(0.0, 1.0);
+
+    // Rich 风格色谱渐变映射
+    List<Color> gradientColors;
+    if (color == Rm.mint || color == Rm.mintDeep) {
+      gradientColors = const [Color(0xFF00C6FF), Rm.mint];
+    } else if (color == Rm.coral || color == Rm.coralDeep) {
+      gradientColors = const [Color(0xFFFF6584), Rm.coral];
+    } else if (color == Rm.cyan || color == Rm.cyanDeep) {
+      gradientColors = const [Color(0xFF38EF7D), Rm.cyan];
+    } else {
+      gradientColors = [color.withValues(alpha: 0.82), color];
+    }
+
+    return Container(
+      height: height,
+      decoration: BoxDecoration(
+        color: Rm.paper2,
+        borderRadius: BorderRadius.circular(height / 2),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(height / 2),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final barWidth = constraints.maxWidth * clamped;
+            return Stack(
+              children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 320),
+                  curve: Curves.easeOutCubic,
+                  width: barWidth,
+                  height: height,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: gradientColors,
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                    ),
+                    borderRadius: BorderRadius.circular(height / 2),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
