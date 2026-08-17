@@ -46,10 +46,10 @@ jobs:
           pod install --repo-update
           cd ..
 
-      - name: Build Flutter iOS Release Archive
+      - name: Build Flutter iOS Release App
         working_directory: ./app
         run: |
-          flutter build ipa --release --no-codesign
+          flutter build ios --release --no-codesign
 
       - name: Package .app into .ipa for SideStore / Sideloadly
         working_directory: ./app
