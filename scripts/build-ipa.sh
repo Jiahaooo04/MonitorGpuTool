@@ -30,22 +30,18 @@ echo "==> Setting deployment target to iOS 13.0..."
 sed -i '' "s/# platform :ios, '12.0'/platform :ios, '13.0'/g" ios/Podfile || true
 sed -i '' "s/platform :ios, '12.0'/platform :ios, '13.0'/g" ios/Podfile || true
 
-echo "==> Explicitly disabling Xcode code signing enforcement..."
-sed -i '' "s/CODE_SIGN_STYLE = Automatic;/CODE_SIGN_STYLE = Manual;/g" ios/Runner.xcodeproj/project.pbxproj || true
-sed -i '' "s/CODE_SIGNING_REQUIRED = YES;/CODE_SIGNING_REQUIRED = NO;/g" ios/Runner.xcodeproj/project.pbxproj || true
-
 echo "==> Installing CocoaPods..."
 cd ios
 pod install --repo-update
 cd ..
 
-echo "==> Building Flutter iOS App (Release)..."
-flutter build ios --release --no-codesign
+echo "==> Building Flutter iOS Archive (Release)..."
+flutter build ipa --release --no-codesign
 
 echo "==> Packaging into RunMon.ipa..."
-APP_PATH="build/ios/iphoneos/Runner.app"
+APP_PATH="build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app"
 if [ ! -d "$APP_PATH" ]; then
-  APP_PATH="build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app"
+  APP_PATH="build/ios/iphoneos/Runner.app"
 fi
 
 rm -rf Payload RunMon.ipa
