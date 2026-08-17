@@ -37,30 +37,29 @@ class CommandSnippet {
         command: j['command'] as String? ?? '',
       );
 
-  /// Compose root home startup, bashrc/conda activation (defaults to base), working dir, and command.
-  /// Automatically prepends `mon run` if not already present, ensuring full background monitoring.
-  String toExecutableCommand({bool withMonRun = true}) {
+  /// Compose root home startup, conda path export & activation (defaults to base), working dir, and command.
+  String toExecutableCommand({bool withMonRun = false}) {
     final parts = <String>[];
     final dir = workDir.trim();
     final env = condaEnv.trim();
     var cmd = command.trim();
 
-    // 1. 模拟交互终端: 多路径自动定位并 source conda.sh，注入 conda 激活函数
-    parts.add('for _d in "\$HOME/miniconda3" "\$HOME/anaconda3" "\$HOME/miniconda" "\$HOME/anaconda" "/opt/conda" "/root/miniconda3" "/root/anaconda3"; do [ -f "\$_d/etc/profile.d/conda.sh" ] && . "\$_d/etc/profile.d/conda.sh" && break; done; [ -z "\$CONDA_SHLVL" ] && (eval "\$("\$(which conda 2>/dev/null || echo conda)" shell.bash hook 2>/dev/null)" || true)');
+    // 1. 确保 conda bin 加入 PATH，并加载 profile.d/conda.sh 注册 conda 函数
+    parts.add('for _b in "\$HOME/miniconda3/bin" "\$HOME/anaconda3/bin" "\$HOME/miniconda/bin" "\$HOME/anaconda/bin" "/opt/conda/bin" "/root/miniconda3/bin" "/root/anaconda3/bin"; do [ -d "\$_b" ] && export PATH="\$_b:\$PATH" && break; done; for _d in "\$HOME/miniconda3" "\$HOME/anaconda3" "\$HOME/miniconda" "\$HOME/anaconda" "/opt/conda" "/root/miniconda3" "/root/anaconda3" "\$HOME/.conda"; do [ -f "\$_d/etc/profile.d/conda.sh" ] && . "\$_d/etc/profile.d/conda.sh" && break; done');
 
-    // 2. 环境激活: 若指定了特定环境则 activate 对应环境，否则默认激活 base
+    // 2. 激活环境 (若指定特定环境则激活，若未指定则激活 base)
     if (env.isNotEmpty) {
-      parts.add('conda activate $env');
+      parts.add('(conda activate $env || source activate $env || true)');
     } else {
-      parts.add('(conda activate base 2>/dev/null || true)');
+      parts.add('(conda activate base || source activate base || true)');
     }
 
-    // 3. 切换至工作目录 (若未指定则保持在主目录)
+    // 3. 切换至工作目录
     if (dir.isNotEmpty) {
       parts.add('cd ${dir.contains(' ') ? '"$dir"' : dir}');
     }
 
-    // 4. 执行命令代码 (自动带有 mon run)
+    // 4. 执行命令代码 (在蹲卡场景下由 gpuwait 统一包装 mon run，此处保持纯净命令)
     if (cmd.isNotEmpty) {
       if (withMonRun &&
           !cmd.startsWith('mon run') &&
