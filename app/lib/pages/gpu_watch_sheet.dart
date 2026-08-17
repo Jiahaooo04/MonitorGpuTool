@@ -448,93 +448,92 @@ class _GpuWatchSheetState extends State<_GpuWatchSheet> {
         child: Padding(
           padding: EdgeInsets.only(bottom: bottomInset),
           child: SingleChildScrollView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text('蹲卡提醒与预约',
-                        style: sans(
-                            size: 18, weight: FontWeight.w700, spacing: -0.3)),
-                    const Spacer(),
-                    if (_hasWatch)
-                      SoftButton(
-                          label: '取消蹲卡',
-                          icon: Icons.close_rounded,
-                          deep: Rm.coralDeep,
-                          tint: Rm.coralTint,
-                          onPressed: _sending ? null : _cancel),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Text('勾选的卡全部空出来时，手机马上收到通知；若选好命令信息块，到点将自动开跑。',
-                    style: sans(size: 12.5, color: Rm.inkSoft, height: 1.5)),
-                const SizedBox(height: 16),
-                const SectionLabel('选择要蹲的卡'),
-                for (final g in _gpus)
-                  Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: _gpuRow(g)),
-                const SizedBox(height: 10),
-                const SectionLabel('需持续满足(防假空闲)'),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    _holdChip(0, '立即'),
-                    _holdChip(5, '5 分钟'),
-                    _holdChip(10, '10 分钟'),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 68,
-                          height: 34,
-                          alignment: Alignment.center,
-                          child: TextField(
-                            controller: _holdCtrl,
-                            keyboardType: TextInputType.number,
-                            textInputAction: TextInputAction.done,
-                            onSubmitted: (_) => FocusScope.of(context).unfocus(),
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                              LengthLimitingTextInputFormatter(3),
-                            ],
-                            style: mono(
-                                size: 13,
-                                weight: FontWeight.w600,
-                                color: Rm.ink),
-                            textAlign: TextAlign.center,
-                            decoration: InputDecoration(
-                              contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 6),
-                              filled: true,
-                              fillColor: Rm.card,
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius:
-                                    BorderRadius.circular(Rm.radiusInput),
-                                borderSide:
-                                    const BorderSide(color: Rm.hairline),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius:
-                                    BorderRadius.circular(Rm.radiusInput),
-                                borderSide: const BorderSide(
-                                    color: Rm.pearDeep, width: 1.4),
-                              ),
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text('蹲卡提醒与预约',
+                      style: sans(
+                          size: 18, weight: FontWeight.w700, spacing: -0.3)),
+                  const Spacer(),
+                  if (_hasWatch)
+                    SoftButton(
+                        label: '取消蹲卡',
+                        icon: Icons.close_rounded,
+                        deep: Rm.coralDeep,
+                        tint: Rm.coralTint,
+                        onPressed: _sending ? null : _cancel),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text('勾选的卡全部空出来时，手机马上收到通知；若选好命令信息块，到点将自动开跑。',
+                  style: sans(size: 12.5, color: Rm.inkSoft, height: 1.5)),
+              const SizedBox(height: 16),
+              const SectionLabel('选择要蹲的卡'),
+              for (final g in _gpus)
+                Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: _gpuRow(g)),
+              const SizedBox(height: 10),
+              const SectionLabel('需持续满足(防假空闲)'),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  _holdChip(0, '立即'),
+                  _holdChip(5, '5 分钟'),
+                  _holdChip(10, '10 分钟'),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 68,
+                        height: 34,
+                        alignment: Alignment.center,
+                        child: TextField(
+                          controller: _holdCtrl,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(3),
+                          ],
+                          style: mono(
+                              size: 13,
+                              weight: FontWeight.w600,
+                              color: Rm.ink),
+                          textAlign: TextAlign.center,
+                          decoration: InputDecoration(
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 6),
+                            filled: true,
+                            fillColor: Rm.card,
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius:
+                                  BorderRadius.circular(Rm.radiusInput),
+                              borderSide:
+                                  const BorderSide(color: Rm.hairline),
                             ),
-                            onChanged: _onHoldInputChanged,
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius:
+                                  BorderRadius.circular(Rm.radiusInput),
+                              borderSide: const BorderSide(
+                                  color: Rm.pearDeep, width: 1.4),
+                            ),
                           ),
+                          onChanged: _onHoldInputChanged,
                         ),
-                        const SizedBox(width: 6),
-                        Text('分钟 (0-120)',
-                            style: sans(size: 12.5, color: Rm.inkSoft)),
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text('分钟 (0-120)',
+                          style: sans(size: 12.5, color: Rm.inkSoft)),
+                    ],
+                  ),
+                ],
+              ),
               const SizedBox(height: 18),
               const SectionLabel('预约执行信息块 (从命令库选取)'),
               _snippetSelector(),
@@ -571,8 +570,9 @@ class _GpuWatchSheetState extends State<_GpuWatchSheet> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 /// 服务器页顶部的"蹲卡中"横幅:实时达标状态 + 点击进入编辑。

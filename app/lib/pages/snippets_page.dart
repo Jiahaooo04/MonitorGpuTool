@@ -363,6 +363,7 @@ class _SnippetEditSheetState extends State<_SnippetEditSheet> {
         child: Padding(
           padding: EdgeInsets.only(bottom: bottomInset),
           child: SingleChildScrollView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -388,7 +389,6 @@ class _SnippetEditSheetState extends State<_SnippetEditSheet> {
                 const SectionLabel('信息块名称'),
                 TextField(
                   controller: _nameCtrl,
-                  textInputAction: TextInputAction.next,
                   style: sans(size: 14),
                   decoration: _inputDeco('例如: 训练 ResNet50'),
                 ),
@@ -396,31 +396,27 @@ class _SnippetEditSheetState extends State<_SnippetEditSheet> {
                 const SectionLabel('Conda 环境名称 (可选)'),
                 TextField(
                   controller: _envCtrl,
-                  textInputAction: TextInputAction.next,
                   style: mono(size: 13, color: Rm.ink),
-                  decoration: _inputDeco('例如: pytorch2'),
+                  decoration: _inputDeco('例如: torch2 (留空则默认使用 base)'),
                 ),
                 const SizedBox(height: 12),
                 const SectionLabel('工作目录文件夹 (可选)'),
                 TextField(
                   controller: _dirCtrl,
-                  textInputAction: TextInputAction.next,
                   style: mono(size: 13, color: Rm.ink),
-                  decoration: _inputDeco('例如: ~/project/train'),
+                  decoration: _inputDeco('例如: ~/project/train (留空则在主目录)'),
                 ),
                 const SizedBox(height: 12),
                 const SectionLabel('命令行代码'),
                 TextField(
                   controller: _cmdCtrl,
-                  textInputAction: TextInputAction.done,
-                  onEditingComplete: () => FocusScope.of(context).unfocus(),
                   style: mono(size: 13, color: Rm.ink),
                   maxLines: 2,
                   decoration: _inputDeco('例如: python train.py'),
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  '执行时将自动组合: cd 工作目录 -> conda activate 环境 -> 执行命令行代码。',
+                  '执行时将自动从主目录启动，激活 Conda 环境并切换到工作目录。',
                   style: sans(size: 11.5, color: Rm.inkFaint, height: 1.4),
                 ),
                 const SizedBox(height: 20),

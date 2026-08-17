@@ -175,6 +175,12 @@ class _TerminalPageState extends State<TerminalPage> {
             _KeyButton(label: '▼ 下', onTap: () => _sendKey('\x1b[B')),
             const SizedBox(width: 6),
             _KeyButton(label: '⏎ 回车', onTap: () => _sendKey('\r')),
+            const SizedBox(width: 6),
+            _KeyButton(
+              label: '⌨ 收起',
+              color: Rm.inkFaint,
+              onTap: () => FocusScope.of(context).unfocus(),
+            ),
             const SizedBox(width: 8),
             _KeyButton(
               label: '📚 命令库',

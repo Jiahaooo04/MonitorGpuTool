@@ -34,11 +34,11 @@ workflows:
           pod install --repo-update
           cd ..
 
-      - name: Build Flutter iOS Release App
+      - name: Build Flutter iOS Release Archive
         working_directory: app
         script: |
-          # Build release iOS app bundle without codesigning
-          flutter build ios --release --no-codesign
+          # Build full archive without codesigning
+          flutter build ipa --release --no-codesign
 
       - name: Package into Sideloadable IPA
         working_directory: app

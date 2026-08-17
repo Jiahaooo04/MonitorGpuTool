@@ -37,7 +37,7 @@ class CommandSnippet {
         command: j['command'] as String? ?? '',
       );
 
-  /// Compose working dir, conda activation, and command into a single executable bash command.
+  /// Compose root home startup, bashrc/conda activation (defaults to base), working dir, and command.
   /// Automatically prepends `mon run` if not already present, ensuring full background monitoring.
   String toExecutableCommand({bool withMonRun = true}) {
     final parts = <String>[];
@@ -45,20 +45,22 @@ class CommandSnippet {
     final env = condaEnv.trim();
     var cmd = command.trim();
 
-    // 1. 如果指定了工作目录: cd 到对应目录
+    // 1. 模拟服务器终端交互登录: 从家目录启动并加载 bashrc 与 conda 环境 hook
+    parts.add('[ -f ~/.bashrc ] && source ~/.bashrc 2>/dev/null; (eval "\$(conda shell.bash hook 2>/dev/null)" || source "\$(conda info --base 2>/dev/null)/etc/profile.d/conda.sh" 2>/dev/null || true)');
+
+    // 2. 环境激活: 若指定了特定环境则 activate 对应环境，否则默认激活 base
+    if (env.isNotEmpty) {
+      parts.add('conda activate $env');
+    } else {
+      parts.add('(conda activate base 2>/dev/null || true)');
+    }
+
+    // 3. 切换至工作目录 (若未指定则保持在主目录)
     if (dir.isNotEmpty) {
       parts.add('cd ${dir.contains(' ') ? '"$dir"' : dir}');
     }
 
-    // 2. 环境初始化: 模拟终端打开时的环境，确保自动加载 conda 及对应环境 (未填则默认激活 base)
-    if (env.isNotEmpty) {
-      parts.add(
-          '(eval "\$(conda shell.bash hook 2>/dev/null)" || source "\$(conda info --base 2>/dev/null)/etc/profile.d/conda.sh" 2>/dev/null || source "\$HOME/miniconda3/etc/profile.d/conda.sh" 2>/dev/null || source "\$HOME/anaconda3/etc/profile.d/conda.sh" 2>/dev/null || true) && conda activate $env');
-    } else {
-      parts.add(
-          '(eval "\$(conda shell.bash hook 2>/dev/null)" || source "\$(conda info --base 2>/dev/null)/etc/profile.d/conda.sh" 2>/dev/null || source "\$HOME/miniconda3/etc/profile.d/conda.sh" 2>/dev/null || source "\$HOME/anaconda3/etc/profile.d/conda.sh" 2>/dev/null || true) && (conda activate base 2>/dev/null || true)');
-    }
-
+    // 4. 执行命令代码 (自动带有 mon run)
     if (cmd.isNotEmpty) {
       if (withMonRun &&
           !cmd.startsWith('mon run') &&

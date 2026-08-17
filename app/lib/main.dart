@@ -29,11 +29,6 @@ class RunMonApp extends StatelessWidget {
       title: 'RunMon',
       debugShowCheckedModeBanner: false,
       theme: buildTheme(),
-      builder: (context, child) => GestureDetector(
-        behavior: HitTestBehavior.translucent,
-        onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-        child: child,
-      ),
       home: const HomePage(),
     );
   }
