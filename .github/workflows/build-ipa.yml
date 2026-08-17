@@ -23,7 +23,7 @@ jobs:
           cache: true
 
       - name: Prepare Flutter and iOS Project
-        working-directory: ./app
+        working_directory: ./app
         run: |
           flutter pub get
           flutter create --platforms=ios --org com.runmon --project-name runmon .
@@ -46,20 +46,19 @@ jobs:
           pod install --repo-update
           cd ..
 
-      - name: Build Flutter iOS Release App Bundle
-        working-directory: ./app
+      - name: Build Flutter iOS Release App
+        working_directory: ./app
         run: |
           flutter build ios --release --no-codesign
 
       - name: Package .app into .ipa for SideStore / Sideloadly
-        working-directory: ./app
+        working_directory: ./app
         run: |
-          APP_PATH="build/ios/iphoneos/Runner.app"
+          APP_PATH="build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app"
           if [ ! -d "$APP_PATH" ]; then
-            APP_PATH="build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app"
+            APP_PATH="build/ios/iphoneos/Runner.app"
           fi
 
-          rm -rf Payload RunMon.ipa
           mkdir -p Payload
           cp -r "$APP_PATH" Payload/
           zip -r -9 RunMon.ipa Payload/
