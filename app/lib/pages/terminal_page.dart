@@ -71,13 +71,17 @@ class _TerminalPageState extends State<TerminalPage> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
       ),
       builder: (ctx) => _TerminalSnippetSheet(
-        onFill: (cmd) {
+        onFill: (snippet) {
           Navigator.pop(ctx);
-          appState.termInput(widget.agentId, cmd);
+          final text = snippet.toExecutableSteps().join(' && ');
+          appState.termInput(widget.agentId, text);
         },
-        onRun: (cmd) {
+        onRun: (snippet) {
           Navigator.pop(ctx);
-          appState.termInput(widget.agentId, '$cmd\r');
+          final steps = snippet.toExecutableSteps();
+          for (final step in steps) {
+            appState.termInput(widget.agentId, '$step\r');
+          }
         },
       ),
     );
@@ -321,8 +325,8 @@ class _PresetBar extends StatelessWidget {
 
 /// 终端中从命令库选择信息块弹层
 class _TerminalSnippetSheet extends StatelessWidget {
-  final void Function(String cmd) onFill;
-  final void Function(String cmd) onRun;
+  final void Function(CommandSnippet snippet) onFill;
+  final void Function(CommandSnippet snippet) onRun;
   const _TerminalSnippetSheet({
     required this.onFill,
     required this.onRun,
@@ -388,7 +392,7 @@ class _TerminalSnippetSheet extends StatelessWidget {
                       itemCount: snippets.length,
                       itemBuilder: (context, i) {
                         final s = snippets[i];
-                        final fullCmd = s.toExecutableCommand();
+                        final previewCmd = s.toExecutableSteps().join(' && ');
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 10),
                           child: RmCard(
@@ -412,7 +416,7 @@ class _TerminalSnippetSheet extends StatelessWidget {
                                       icon: Icons.input_rounded,
                                       deep: Rm.ink,
                                       tint: Rm.paper2,
-                                      onPressed: () => onFill(fullCmd),
+                                      onPressed: () => onFill(s),
                                     ),
                                     const SizedBox(width: 8),
                                     SoftButton(
@@ -420,7 +424,7 @@ class _TerminalSnippetSheet extends StatelessWidget {
                                       icon: Icons.play_arrow_rounded,
                                       deep: Rm.mintDeep,
                                       tint: Rm.mintTint,
-                                      onPressed: () => onRun(fullCmd),
+                                      onPressed: () => onRun(s),
                                     ),
                                   ],
                                 ),
@@ -434,7 +438,7 @@ class _TerminalSnippetSheet extends StatelessWidget {
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Text(
-                                    fullCmd,
+                                    previewCmd,
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
                                     style: mono(

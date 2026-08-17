@@ -37,29 +37,26 @@ class CommandSnippet {
         command: j['command'] as String? ?? '',
       );
 
-  /// Compose self-contained executable command (Conda self-initialization, activation, working directory change, and command execution).
-  String toExecutableCommand({bool withMonRun = false}) {
-    // 1. 自动从 ~/.bashrc 提取 conda 初始化段并载入 (兼容任意服务器上的 PyPI runmon 守护进程)
-    const init = 'eval "\$(sed -n \'/^# >>> conda initialize >>>/,/^# <<< conda initialize <<</p\' ~/.bashrc 2>/dev/null)" 2>/dev/null; [ -z "\$CONDA_SHLVL" ] && for _d in "\$HOME/miniconda3" "\$HOME/anaconda3" "\$HOME/miniconda" "\$HOME/anaconda" "/opt/conda" "\$HOME/.conda" /data/home/*/miniconda* /data/home/*/anaconda*; do [ -f "\$_d/etc/profile.d/conda.sh" ] && . "\$_d/etc/profile.d/conda.sh" && break; done; [ -z "\$CONDA_SHLVL" ] && eval "\$(conda shell.bash hook 2>/dev/null)" 2>/dev/null || true';
-
-    final parts = <String>[];
+  /// Get the individual sequential command steps (e.g. 1. conda activate, 2. cd, 3. python ...).
+  List<String> toExecutableSteps({bool withMonRun = false}) {
+    final steps = <String>[];
     final dir = workDir.trim();
     final env = condaEnv.trim();
     var cmd = command.trim();
 
-    // 2. 激活指定 Conda 环境 (若未指定则激活 base)
+    // 1. 激活环境 (优先激活指定环境，若未指定则激活 base)
     if (env.isNotEmpty) {
-      parts.add('(conda activate $env 2>/dev/null || source activate $env 2>/dev/null || true)');
+      steps.add('conda activate $env');
     } else {
-      parts.add('(conda activate base 2>/dev/null || source activate base 2>/dev/null || true)');
+      steps.add('conda activate base');
     }
 
-    // 3. 切换到工作目录
+    // 2. 切换工作目录
     if (dir.isNotEmpty) {
-      parts.add('cd ${dir.contains(' ') ? '"$dir"' : dir}');
+      steps.add('cd ${dir.contains(' ') ? '"$dir"' : dir}');
     }
 
-    // 4. 执行目标命令代码
+    // 3. 执行目标命令代码
     if (cmd.isNotEmpty) {
       if (withMonRun &&
           !cmd.startsWith('mon run') &&
@@ -69,11 +66,57 @@ class CommandSnippet {
         final nameArg = taskName.isNotEmpty ? '--name "$taskName" ' : '';
         cmd = 'mon run $nameArg-- $cmd';
       }
-      parts.add(cmd);
+      steps.add(cmd);
     }
 
-    final execChain = parts.join(' && ');
-    return '$init; $execChain';
+    return steps;
+  }
+
+  /// Compose multiline sequential executable script with terminal step-by-step trace logging.
+  String toExecutableCommand({bool withMonRun = false}) {
+    final lines = <String>[];
+    final dir = workDir.trim();
+    final env = condaEnv.trim();
+    var cmd = command.trim();
+
+    // 1. 自动从 ~/.bashrc 提取 conda 初始化段并载入 (兼容任意服务器上的 PyPI runmon 守护进程)
+    lines.add('eval "\$(sed -n \'/^# >>> conda initialize >>>/,/^# <<< conda initialize <<</p\' ~/.bashrc 2>/dev/null)" 2>/dev/null || true');
+    lines.add('[ -z "\$CONDA_SHLVL" ] && for _d in "\$HOME/miniconda3" "\$HOME/anaconda3" "\$HOME/miniconda" "\$HOME/anaconda" "/opt/conda" "\$HOME/.conda" /data/home/*/miniconda* /data/home/*/anaconda*; do [ -f "\$_d/etc/profile.d/conda.sh" ] && . "\$_d/etc/profile.d/conda.sh" && break; done');
+    lines.add('[ -z "\$CONDA_SHLVL" ] && eval "\$(conda shell.bash hook 2>/dev/null)" 2>/dev/null || true');
+
+    // 2. 步骤 1: 打印并激活 Conda 环境
+    if (env.isNotEmpty) {
+      lines.add('echo "[RunMon] 🟢 [1/3] 激活 Conda 环境: $env"');
+      lines.add('conda activate $env || source activate $env || true');
+    } else {
+      lines.add('echo "[RunMon] 🟢 [1/3] 激活 Conda 默认 base 环境"');
+      lines.add('conda activate base 2>/dev/null || true');
+    }
+
+    // 3. 步骤 2: 打印并切换工作目录
+    if (dir.isNotEmpty) {
+      lines.add('echo "[RunMon] 📁 [2/3] 切换工作目录: $dir"');
+      lines.add('cd ${dir.contains(' ') ? '"$dir"' : dir} || { echo "❌ [RunMon] 目录不存在: $dir"; exit 1; }');
+    } else {
+      lines.add('echo "[RunMon] 📁 [2/3] 当前工作目录: \$(pwd)"');
+    }
+
+    // 4. 步骤 3: 打印并执行目标命令代码
+    if (cmd.isNotEmpty) {
+      if (withMonRun &&
+          !cmd.startsWith('mon run') &&
+          !cmd.startsWith('runmon run') &&
+          !cmd.startsWith('mon wait')) {
+        final taskName = name.trim().replaceAll('"', '');
+        final nameArg = taskName.isNotEmpty ? '--name "$taskName" ' : '';
+        cmd = 'mon run $nameArg-- $cmd';
+      }
+      lines.add('echo "[RunMon] ▶️ [3/3] 执行命令: $cmd"');
+      lines.add('echo "============================================================"');
+      lines.add(cmd);
+    }
+
+    return lines.join('\n');
   }
 }
 
