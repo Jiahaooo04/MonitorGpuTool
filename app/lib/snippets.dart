@@ -45,8 +45,8 @@ class CommandSnippet {
     final env = condaEnv.trim();
     var cmd = command.trim();
 
-    // 1. 模拟服务器终端交互登录: 从家目录启动并加载 bashrc 与 conda 环境 hook
-    parts.add('[ -f ~/.bashrc ] && source ~/.bashrc 2>/dev/null; (eval "\$(conda shell.bash hook 2>/dev/null)" || source "\$(conda info --base 2>/dev/null)/etc/profile.d/conda.sh" 2>/dev/null || true)');
+    // 1. 模拟交互终端: 多路径自动定位并 source conda.sh，注入 conda 激活函数
+    parts.add('for _d in "\$HOME/miniconda3" "\$HOME/anaconda3" "\$HOME/miniconda" "\$HOME/anaconda" "/opt/conda" "/root/miniconda3" "/root/anaconda3"; do [ -f "\$_d/etc/profile.d/conda.sh" ] && . "\$_d/etc/profile.d/conda.sh" && break; done; [ -z "\$CONDA_SHLVL" ] && (eval "\$("\$(which conda 2>/dev/null || echo conda)" shell.bash hook 2>/dev/null)" || true)');
 
     // 2. 环境激活: 若指定了特定环境则 activate 对应环境，否则默认激活 base
     if (env.isNotEmpty) {
