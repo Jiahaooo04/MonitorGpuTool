@@ -278,22 +278,36 @@ class GpuWatchManager:
         script_file = script_dir / f"launch_{int(time.time())}_{os.getpid()}.sh"
 
         script_content = f"""#!/usr/bin/env bash
-# 1. 完整加载系统环境与用户 Profile
-[ -f /etc/profile ] && . /etc/profile 2>/dev/null
-[ -f ~/.profile ] && . ~/.profile 2>/dev/null
-[ -f ~/.bash_profile ] && . ~/.bash_profile 2>/dev/null
-[ -f ~/.bashrc ] && . ~/.bashrc 2>/dev/null
-
-# 2. 多路径探测并加载 Conda 核心函数
-for _d in "$HOME/miniconda3" "$HOME/anaconda3" "$HOME/miniconda" "$HOME/anaconda" "/opt/conda" "/root/miniconda3" "/root/anaconda3" "$HOME/.conda"; do
-    if [ -f "$_d/etc/profile.d/conda.sh" ]; then
-        . "$_d/etc/profile.d/conda.sh"
-        break
+# 1. 提取并执行 ~/.bashrc 中由 conda init 写入的专属初始化配置块 (绕过任何非交互式 return 拦截)
+for rc in "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.profile"; do
+    if [ -f "$rc" ]; then
+        eval "$(sed -n '/# >>> conda initialize >>>/,/# <<< conda initialize <<</p' "$rc" 2>/dev/null)"
     fi
 done
-[ -z "$CONDA_PREFIX" ] && (eval "$(conda shell.bash hook 2>/dev/null)" 2>/dev/null || true)
 
-# 3. 顺序执行用户指令
+# 2. 若尚未载入 conda 函数，通过 PATH 及系统路径动态查找并载入 conda.sh
+if ! type conda >/dev/null 2>&1; then
+    for _d in "$HOME/miniconda3" "$HOME/anaconda3" "$HOME/miniconda" "$HOME/anaconda" "/opt/conda" "/data/home"/*/miniconda* "/data/home"/*/anaconda*; do
+        if [ -f "$_d/etc/profile.d/conda.sh" ]; then
+            . "$_d/etc/profile.d/conda.sh"
+            break
+        fi
+    done
+fi
+
+# 3. 注入 Conda Shell Hook (保证 conda activate 函数可用)
+if type conda >/dev/null 2>&1; then
+    eval "$(conda shell.bash hook 2>/dev/null)" || true
+fi
+
+# 4. 加载系统与用户全量环境变量与代理 (去除非交互 return 限制后加载)
+[ -f /etc/profile ] && . /etc/profile 2>/dev/null
+[ -f ~/.profile ] && . ~/.profile 2>/dev/null
+if [ -f "$HOME/.bashrc" ]; then
+    eval "$(sed -e 's/\\[ -z "\\$PS1" \\] && return//g' -e 's/case \\$- in \\*i\\*\\) ;; \\*\\) return;; esac//g' "$HOME/.bashrc" 2>/dev/null)" 2>/dev/null || true
+fi
+
+# 5. 顺序执行用户指令
 {command}
 """
         script_file.write_text(script_content, encoding="utf-8")
