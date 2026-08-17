@@ -267,7 +267,7 @@ class GpuWatchManager:
         env["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # 让 CUDA 编号与 nvidia-smi 一致
         env["CUDA_VISIBLE_DEVICES"] = idx
         argv = [sys.executable, "-m", "runmon", "run", "--name", name or "预约任务",
-                "--gpu", idx, "--", "bash", "-lc", command]
+                "--gpu", idx, "--", "bash", "-ic", command]
         try:
             subprocess.Popen(argv, cwd=os.path.expanduser("~"), env=env,
                              start_new_session=True, stdin=subprocess.DEVNULL,

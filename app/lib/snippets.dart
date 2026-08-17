@@ -44,19 +44,12 @@ class CommandSnippet {
     final env = condaEnv.trim();
     var cmd = command.trim();
 
-    // 1. 模拟交互终端登录: 分步容错初始化 Conda (以分号隔离，防止单个路径不存在中断执行)
-    initParts.add('source ~/.bashrc 2>/dev/null');
-    initParts.add('[ -f ~/miniconda3/etc/profile.d/conda.sh ] && . ~/miniconda3/etc/profile.d/conda.sh');
-    initParts.add('[ -f ~/anaconda3/etc/profile.d/conda.sh ] && . ~/anaconda3/etc/profile.d/conda.sh');
-    initParts.add('[ -f /opt/conda/etc/profile.d/conda.sh ] && . /opt/conda/etc/profile.d/conda.sh');
-    initParts.add('[ -f ~/miniconda/etc/profile.d/conda.sh ] && . ~/miniconda/etc/profile.d/conda.sh');
-    initParts.add('[ -f ~/anaconda/etc/profile.d/conda.sh ] && . ~/anaconda/etc/profile.d/conda.sh');
-    initParts.add('eval "\$(conda shell.bash hook 2>/dev/null)"');
+    // 1. 模拟交互终端登录: 完整加载 bashrc，并通过多路径注入 Conda 初始化
+    initParts.add('source ~/.bashrc 2>/dev/null || true');
+    initParts.add('for _d in "\$HOME/miniconda3" "\$HOME/anaconda3" "\$HOME/miniconda" "\$HOME/anaconda" "/opt/conda" "/root/miniconda3" "/root/anaconda3" "\$HOME/.conda"; do [ -f "\$_d/etc/profile.d/conda.sh" ] && . "\$_d/etc/profile.d/conda.sh" && break; done');
+    initParts.add('eval "\$(conda shell.bash hook 2>/dev/null)" 2>/dev/null || true');
 
-    // 2. 智能注入 Hugging Face 国内镜像加速 (若用户未自定义则默认使用 hf-mirror.com)
-    initParts.add('export HF_ENDPOINT="\${HF_ENDPOINT:-https://hf-mirror.com}"');
-
-    // 3. 激活环境 (优先激活指定环境，若未指定则激活 base)
+    // 2. 激活环境 (优先激活指定环境，若未指定则激活 base)
     if (env.isNotEmpty) {
       initParts.add('conda activate $env');
     } else {
