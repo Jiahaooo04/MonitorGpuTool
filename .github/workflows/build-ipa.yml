@@ -23,7 +23,7 @@ jobs:
           cache: true
 
       - name: Prepare Flutter and iOS Project
-        working_directory: ./app
+        working-directory: ./app
         run: |
           flutter pub get
           flutter create --platforms=ios --org com.runmon --project-name runmon .
@@ -38,32 +38,28 @@ jobs:
           /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName RunMon" "$PLIST" 2>/dev/null || /usr/libexec/PlistBuddy -c "Add :CFBundleDisplayName string 'RunMon'" "$PLIST"
           /usr/libexec/PlistBuddy -c "Set :CFBundleName RunMon" "$PLIST" 2>/dev/null || /usr/libexec/PlistBuddy -c "Add :CFBundleName string 'RunMon'" "$PLIST"
 
-          # 3. Update Podfile deployment target to 13.0 for modern plugin compatibility
+          # Ensure iOS deployment target 13.0
           sed -i '' "s/# platform :ios, '12.0'/platform :ios, '13.0'/g" ios/Podfile || true
           sed -i '' "s/platform :ios, '12.0'/platform :ios, '13.0'/g" ios/Podfile || true
 
-          # 4. Explicitly disable Xcode code signing enforcement in project settings
-          sed -i '' "s/CODE_SIGN_STYLE = Automatic;/CODE_SIGN_STYLE = Manual;/g" ios/Runner.xcodeproj/project.pbxproj || true
-          sed -i '' "s/CODE_SIGNING_REQUIRED = YES;/CODE_SIGNING_REQUIRED = NO;/g" ios/Runner.xcodeproj/project.pbxproj || true
-
-          # 5. Install CocoaPods dependencies
           cd ios
           pod install --repo-update
           cd ..
 
-      - name: Build Flutter iOS Release App
-        working_directory: ./app
+      - name: Build Flutter iOS Release App Bundle
+        working-directory: ./app
         run: |
           flutter build ios --release --no-codesign
 
       - name: Package .app into .ipa for SideStore / Sideloadly
-        working_directory: ./app
+        working-directory: ./app
         run: |
           APP_PATH="build/ios/iphoneos/Runner.app"
           if [ ! -d "$APP_PATH" ]; then
             APP_PATH="build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app"
           fi
 
+          rm -rf Payload RunMon.ipa
           mkdir -p Payload
           cp -r "$APP_PATH" Payload/
           zip -r -9 RunMon.ipa Payload/
