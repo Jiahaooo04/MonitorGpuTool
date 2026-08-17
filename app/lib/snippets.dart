@@ -37,26 +37,34 @@ class CommandSnippet {
         command: j['command'] as String? ?? '',
       );
 
-  /// Compose root home startup, conda path export & activation (defaults to base), working dir, and command.
+  /// Compose root home startup, fault-tolerant bashrc/conda activation (defaults to base), working dir, and command.
   String toExecutableCommand({bool withMonRun = false}) {
-    final parts = <String>[];
+    final initParts = <String>[];
     final dir = workDir.trim();
     final env = condaEnv.trim();
     var cmd = command.trim();
 
-    // 1. 定义并执行 conda 初始化函数 (确保退出码始终为 0，防止循环末尾返回 1 导致 && 链熔断)
-    parts.add('_init_conda() { for _b in "\$HOME/miniconda3/bin" "\$HOME/anaconda3/bin" "\$HOME/miniconda/bin" "\$HOME/anaconda/bin" "/opt/conda/bin" "/root/miniconda3/bin" "/root/anaconda3/bin"; do if [ -d "\$_b" ]; then export PATH="\$_b:\$PATH"; break; fi; done; for _d in "\$HOME/miniconda3" "\$HOME/anaconda3" "\$HOME/miniconda" "\$HOME/anaconda" "/opt/conda" "/root/miniconda3" "/root/anaconda3" "\$HOME/.conda"; do if [ -f "\$_d/etc/profile.d/conda.sh" ]; then . "\$_d/etc/profile.d/conda.sh"; break; fi; done; if command -v conda >/dev/null 2>&1; then eval "\$(conda shell.bash hook 2>/dev/null)" || true; fi; return 0; }; _init_conda');
+    // 1. 模拟交互终端登录: 分步容错初始化 Conda (以分号隔离，防止单个路径不存在中断执行)
+    initParts.add('source ~/.bashrc 2>/dev/null');
+    initParts.add('[ -f ~/miniconda3/etc/profile.d/conda.sh ] && . ~/miniconda3/etc/profile.d/conda.sh');
+    initParts.add('[ -f ~/anaconda3/etc/profile.d/conda.sh ] && . ~/anaconda3/etc/profile.d/conda.sh');
+    initParts.add('[ -f /opt/conda/etc/profile.d/conda.sh ] && . /opt/conda/etc/profile.d/conda.sh');
+    initParts.add('[ -f ~/miniconda/etc/profile.d/conda.sh ] && . ~/miniconda/etc/profile.d/conda.sh');
+    initParts.add('[ -f ~/anaconda/etc/profile.d/conda.sh ] && . ~/anaconda/etc/profile.d/conda.sh');
+    initParts.add('eval "\$(conda shell.bash hook 2>/dev/null)"');
 
-    // 2. 激活目标环境 (若指定特定环境则激活，若未指定则激活 base)
+    // 2. 激活环境 (优先激活指定环境，若未指定则激活 base)
     if (env.isNotEmpty) {
-      parts.add('(conda activate $env || source activate $env || true)');
+      initParts.add('conda activate $env');
     } else {
-      parts.add('(conda activate base || source activate base || true)');
+      initParts.add('conda activate base 2>/dev/null || true');
     }
 
-    // 3. 切换至工作目录
+    final execParts = <String>[];
+
+    // 3. 切换工作目录 (从主目录出发)
     if (dir.isNotEmpty) {
-      parts.add('cd ${dir.contains(' ') ? '"$dir"' : dir}');
+      execParts.add('cd ${dir.contains(' ') ? '"$dir"' : dir}');
     }
 
     // 4. 执行命令代码 (在蹲卡场景下由 gpuwait 统一包装 mon run，此处保持纯净命令)
@@ -69,10 +77,13 @@ class CommandSnippet {
         final nameArg = taskName.isNotEmpty ? '--name "$taskName" ' : '';
         cmd = 'mon run $nameArg-- $cmd';
       }
-      parts.add(cmd);
+      execParts.add(cmd);
     }
 
-    return parts.join(' && ');
+    final initChain = '${initParts.join('; ')};';
+    final execChain = execParts.join(' && ');
+
+    return '$initChain $execChain'.trim();
   }
 }
 
