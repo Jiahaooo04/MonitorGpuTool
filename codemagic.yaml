@@ -34,19 +34,19 @@ workflows:
           pod install --repo-update
           cd ..
 
-      - name: Build Flutter iOS Release App Bundle
+      - name: Build Flutter iOS Release App
         working_directory: app
         script: |
-          # Build release app bundle without codesigning
+          # Build release iOS app bundle without codesigning
           flutter build ios --release --no-codesign
 
       - name: Package into Sideloadable IPA
         working_directory: app
         script: |
-          # Locate the built Runner.app from iphoneos or xcarchive
-          APP_PATH="build/ios/iphoneos/Runner.app"
+          # Locate the built Runner.app from xcarchive or build directory
+          APP_PATH="build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app"
           if [ ! -d "$APP_PATH" ]; then
-            APP_PATH="build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app"
+            APP_PATH="build/ios/iphoneos/Runner.app"
           fi
 
           echo "Packaging from: $APP_PATH"

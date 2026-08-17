@@ -35,13 +35,13 @@ cd ios
 pod install --repo-update
 cd ..
 
-echo "==> Building Flutter iOS App Bundle (Release)..."
+echo "==> Building Flutter iOS App (Release)..."
 flutter build ios --release --no-codesign
 
 echo "==> Packaging into RunMon.ipa..."
-APP_PATH="build/ios/iphoneos/Runner.app"
+APP_PATH="build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app"
 if [ ! -d "$APP_PATH" ]; then
-  APP_PATH="build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app"
+  APP_PATH="build/ios/iphoneos/Runner.app"
 fi
 
 rm -rf Payload RunMon.ipa
