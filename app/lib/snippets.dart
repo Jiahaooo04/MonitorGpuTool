@@ -37,23 +37,21 @@ class CommandSnippet {
         command: j['command'] as String? ?? '',
       );
 
-  /// Get the individual sequential command steps (e.g. 1. conda activate, 2. cd, 3. python ...).
+  /// Get the individual sequential command steps in order: 1. cd, 2. conda activate, 3. target command.
   List<String> toExecutableSteps({bool withMonRun = false}) {
     final steps = <String>[];
     final dir = workDir.trim();
     final env = condaEnv.trim();
     var cmd = command.trim();
 
-    // 1. Activate conda environment
-    if (env.isNotEmpty) {
-      steps.add('conda activate $env');
-    } else {
-      steps.add('conda activate base');
-    }
-
-    // 2. Switch working directory
+    // 1. Switch working directory
     if (dir.isNotEmpty) {
       steps.add('cd ${dir.contains(' ') ? '"$dir"' : dir}');
+    }
+
+    // 2. Activate conda environment
+    if (env.isNotEmpty) {
+      steps.add('conda activate $env');
     }
 
     // 3. Target command code (split multiple lines into individual sequential steps)
@@ -77,21 +75,10 @@ class CommandSnippet {
     return steps;
   }
 
-  /// Compose multiline sequential executable script with terminal step-by-step trace execution.
+  /// Compose multiline sequential executable command string.
   String toExecutableCommand({bool withMonRun = false}) {
     final steps = toExecutableSteps(withMonRun: withMonRun);
-    final lines = <String>[];
-
-    for (final step in steps) {
-      final escaped = step.replaceAll("'", "'\\''");
-      lines.add('if type _runmon_step >/dev/null 2>&1; then');
-      lines.add("    _runmon_step '$escaped'");
-      lines.add('else');
-      lines.add('    $step');
-      lines.add('fi');
-    }
-
-    return lines.join('\n');
+    return steps.join('\n');
   }
 }
 

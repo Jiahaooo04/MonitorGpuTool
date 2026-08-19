@@ -201,7 +201,7 @@ class _RunDetailPageState extends State<RunDetailPage> {
                                 )
                               ]
                             : ansiToTextSpans(
-                                tail.replaceAll('\r', '\n'),
+                                formatTerminalOutput(tail),
                                 mono(
                                     size: 12,
                                     color: Rm.terminalText,

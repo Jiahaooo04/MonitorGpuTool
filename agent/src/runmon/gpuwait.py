@@ -294,19 +294,37 @@ class GpuWatchManager:
             exec_body = "\n".join(lines) if lines else command
 
         script_content = f"""#!/usr/bin/env bash
-# 1. Extract and source conda initialize block from shell rc files
-for rc in "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.profile"; do
-    if [ -f "$rc" ]; then
-        eval "$(sed -n '/# >>> conda initialize >>>/,/# <<< conda initialize <<</p' "$rc" 2>/dev/null)"
-    fi
-done
-
-# 2. Locate and source conda.sh if conda function is not yet available
+# 1. Search and source conda from common paths if conda command is not yet available
 if ! type conda >/dev/null 2>&1; then
-    for _d in "$HOME/miniconda3" "$HOME/anaconda3" "$HOME/miniconda" "$HOME/anaconda" "/opt/conda" "$HOME/.conda" /data/home/*/miniconda* /data/home/*/anaconda*; do
-        if [ -f "$_d/etc/profile.d/conda.sh" ]; then
-            . "$_d/etc/profile.d/conda.sh"
-            break
+    for _d in "$CONDA_EXE" "$MAMBA_EXE" \
+              "$HOME/miniconda3" "$HOME/anaconda3" "$HOME/miniconda" "$HOME/anaconda" \
+              "$HOME/miniforge3" "$HOME/mambaforge" "$HOME/.conda" \
+              "/opt/conda" "/opt/miniconda3" "/opt/anaconda3" \
+              "/usr/local/miniconda3" "/usr/local/anaconda3" \
+              "/data/miniconda3" "/data/anaconda3" \
+              /data/home/*/miniconda* /data/home/*/anaconda* \
+              /home/*/miniconda* /home/*/anaconda* /home/*/miniforge* /home/*/mambaforge*; do
+        if [ -n "$_d" ]; then
+            if [ -f "$_d/etc/profile.d/conda.sh" ]; then
+                . "$_d/etc/profile.d/conda.sh" 2>/dev/null
+                break
+            elif [ -f "$_d/bin/conda" ]; then
+                export PATH="$_d/bin:$PATH"
+                eval "$("$_d/bin/conda" shell.bash hook 2>/dev/null)" || true
+                break
+            fi
+        fi
+    done
+fi
+
+# 2. Extract and source conda initialize block from shell rc files if still needed
+if ! type conda >/dev/null 2>&1; then
+    for rc in "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.profile"; do
+        if [ -f "$rc" ]; then
+            eval "$(sed -n '/# >>> conda initialize >>>/,/# <<< conda initialize <<</p' "$rc" 2>/dev/null)"
+            if type conda >/dev/null 2>&1; then
+                break
+            fi
         fi
     done
 fi
@@ -319,6 +337,7 @@ fi
 # 4. Load system and user environment profiles
 [ -f /etc/profile ] && . /etc/profile 2>/dev/null
 [ -f ~/.profile ] && . ~/.profile 2>/dev/null
+[ -f "$HOME/.bash_profile" ] && . "$HOME/.bash_profile" 2>/dev/null
 if [ -f "$HOME/.bashrc" ]; then
     eval "$(sed -e 's/\\[ -z "\\$PS1" \\] && return//g' -e 's/case \\$- in \\*i\\*\\) ;; \\*\\) return;; esac//g' "$HOME/.bashrc" 2>/dev/null)" 2>/dev/null || true
 fi
@@ -356,11 +375,16 @@ _runmon_step() {{
     printf "%s\\n" "$_cmd"
     eval "$_cmd"
     local _ret=$?
-    [ $_ret -ne 0 ] && exit $_ret
+    if [ $_ret -ne 0 ]; then
+        printf "\\033[01;31m[RunMon] 步骤执行失败 (退出码: %d)\\033[00m\\n" "$_ret"
+        _runmon_prompt
+        printf "\\n"
+        exit $_ret
+    fi
     return 0
 }}
 
-# 6. Sequentially execute user commands
+# 6. Sequentially execute user commands step-by-step
 {exec_body}
 
 # 7. Print concluding terminal prompt

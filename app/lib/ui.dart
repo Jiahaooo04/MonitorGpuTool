@@ -552,6 +552,35 @@ class _SparkPainter extends CustomPainter {
 
 // ---------- 终端 ANSI 文本辅助 ----------
 
+/// Process raw terminal output stream:
+/// 1. Normalize CRLF to LF.
+/// 2. Process standalone carriage returns (\r) to overwrite lines (e.g. for tqdm/progress bars).
+/// 3. Strip non-SGR escape sequences (e.g. cursor moves, line clears) while preserving colors.
+String formatTerminalOutput(String raw) {
+  if (raw.isEmpty) return raw;
+  final normalized = raw.replaceAll('\r\n', '\n');
+  final lines = normalized.split('\n');
+  final processedLines = <String>[];
+
+  for (final line in lines) {
+    if (line.contains('\r')) {
+      final segments = line.split('\r');
+      String visible = '';
+      for (final seg in segments) {
+        if (seg.isNotEmpty) {
+          visible = seg;
+        }
+      }
+      processedLines.add(visible);
+    } else {
+      processedLines.add(line);
+    }
+  }
+
+  final joined = processedLines.join('\n');
+  return joined.replaceAll(RegExp(r'\x1b\[[0-9;]*[A-LN-Za-ln-z]|\x1b\[\?[0-9;]*[a-zA-Z]'), '');
+}
+
 /// Strip ANSI escape codes from string for plain text views.
 String stripAnsi(String text) {
   return text.replaceAll(RegExp(r'\x1b\[[0-9;]*[a-zA-Z]'), '');
@@ -648,4 +677,5 @@ List<TextSpan> ansiToTextSpans(String text, TextStyle baseStyle) {
 
   return spans;
 }
+
 
