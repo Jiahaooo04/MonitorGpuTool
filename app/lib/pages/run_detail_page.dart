@@ -84,9 +84,17 @@ class _RunDetailPageState extends State<RunDetailPage> {
                     ]),
                     Expanded(
                       child: SingleChildScrollView(
-                        child: SelectableText(res['tail'] as String,
-                            style: mono(size: 11.5, color: Rm.terminalText,
-                                height: 1.55)),
+                        child: SelectableText.rich(
+                          TextSpan(
+                            children: ansiToTextSpans(
+                              res['tail'] as String,
+                              mono(
+                                  size: 11.5,
+                                  color: Rm.terminalText,
+                                  height: 1.55),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ]),
@@ -180,9 +188,26 @@ class _RunDetailPageState extends State<RunDetailPage> {
                   ),
                   child: SingleChildScrollView(
                     controller: _scroll,
-                    child: SelectableText(
-                      tail.isEmpty ? '(暂无输出)' : tail.replaceAll('\r', '\n'),
-                      style: mono(size: 12, color: Rm.terminalText, height: 1.55),
+                    child: SelectableText.rich(
+                      TextSpan(
+                        children: tail.isEmpty
+                            ? [
+                                TextSpan(
+                                  text: '(暂无输出)',
+                                  style: mono(
+                                      size: 12,
+                                      color: Rm.inkFaint,
+                                      height: 1.55),
+                                )
+                              ]
+                            : ansiToTextSpans(
+                                tail.replaceAll('\r', '\n'),
+                                mono(
+                                    size: 12,
+                                    color: Rm.terminalText,
+                                    height: 1.55),
+                              ),
+                      ),
                     ),
                   ),
                 ),

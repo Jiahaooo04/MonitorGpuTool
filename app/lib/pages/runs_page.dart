@@ -293,7 +293,8 @@ class _ActiveRunItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final runId = run['id'] as String;
     final tail = (agent.tails[runId] ?? '').trim();
-    final lastLine = tail.isNotEmpty ? tail.split('\n').last.trim() : '';
+    final lastLine =
+        tail.isNotEmpty ? stripAnsi(tail.split('\n').last.trim()) : '';
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),

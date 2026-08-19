@@ -549,3 +549,103 @@ class _SparkPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _SparkPainter old) => old.v != v;
 }
+
+// ---------- 终端 ANSI 文本辅助 ----------
+
+/// Strip ANSI escape codes from string for plain text views.
+String stripAnsi(String text) {
+  return text.replaceAll(RegExp(r'\x1b\[[0-9;]*[a-zA-Z]'), '');
+}
+
+/// Parse ANSI color and style escape sequences into TextSpans.
+List<TextSpan> ansiToTextSpans(String text, TextStyle baseStyle) {
+  final spans = <TextSpan>[];
+  final regex = RegExp(r'\x1b\[([0-9;]*)m');
+  var currentIndex = 0;
+
+  var currentColor = baseStyle.color;
+  var currentWeight = baseStyle.fontWeight ?? FontWeight.w400;
+
+  for (final match in regex.allMatches(text)) {
+    if (match.start > currentIndex) {
+      final chunk = text.substring(currentIndex, match.start);
+      spans.add(TextSpan(
+        text: chunk,
+        style: baseStyle.copyWith(
+          color: currentColor,
+          fontWeight: currentWeight,
+        ),
+      ));
+    }
+
+    final codeString = match.group(1) ?? '';
+    final codes = codeString.isEmpty
+        ? [0]
+        : codeString.split(';').map((s) => int.tryParse(s) ?? 0).toList();
+
+    for (final code in codes) {
+      switch (code) {
+        case 0:
+          currentColor = baseStyle.color;
+          currentWeight = baseStyle.fontWeight ?? FontWeight.w400;
+          break;
+        case 1:
+          currentWeight = FontWeight.w700;
+          break;
+        case 2:
+          currentColor = const Color(0xFF82878C);
+          break;
+        case 30:
+          currentColor = const Color(0xFF1E293B);
+          break;
+        case 31:
+        case 91:
+          currentColor = const Color(0xFFFF5252);
+          break;
+        case 32:
+        case 92:
+          currentColor = const Color(0xFF4ADE80);
+          break;
+        case 33:
+        case 93:
+          currentColor = const Color(0xFFFBBF24);
+          break;
+        case 34:
+        case 94:
+          currentColor = const Color(0xFF60A5FA);
+          break;
+        case 35:
+        case 95:
+          currentColor = const Color(0xFFC084FC);
+          break;
+        case 36:
+        case 96:
+          currentColor = const Color(0xFF22D3EE);
+          break;
+        case 37:
+        case 97:
+          currentColor = const Color(0xFFF3F4F6);
+          break;
+        case 90:
+          currentColor = const Color(0xFF82878C);
+          break;
+      }
+    }
+
+    currentIndex = match.end;
+  }
+
+  if (currentIndex < text.length) {
+    final chunk = text.substring(currentIndex);
+    spans.add(TextSpan(
+      text: chunk,
+      style: baseStyle.copyWith(
+        color: currentColor,
+        fontWeight: currentWeight,
+      ),
+    ));
+  }
+
+  return spans;
+}
+

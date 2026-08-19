@@ -268,26 +268,42 @@ class GpuWatchManager:
         from .store import data_dir
 
         env = dict(os.environ)
-        env["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # 让 CUDA 编号与 nvidia-smi 一致
+        env["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # Ensure CUDA device index aligns with nvidia-smi
         if idx:
             env["CUDA_VISIBLE_DEVICES"] = idx
 
-        # 使用业界主流方案: 生成隔离独立的 runner 脚本，确保 100% 还原用户完整终端环境
+        # Generate isolated runner script to reproduce full interactive terminal environment
         script_dir = data_dir() / "scripts"
         script_dir.mkdir(parents=True, exist_ok=True)
         script_file = script_dir / f"launch_{int(time.time())}_{os.getpid()}.sh"
 
+        # Wrap command into step-by-step terminal execution if not already wrapped
+        if "_runmon_step" in command:
+            exec_body = command
+        else:
+            lines = []
+            for line in command.splitlines():
+                trimmed = line.strip()
+                if not trimmed:
+                    continue
+                if trimmed.startswith("#"):
+                    lines.append(line)
+                else:
+                    escaped = line.replace("'", "'\\''")
+                    lines.append(f"_runmon_step '{escaped}'")
+            exec_body = "\n".join(lines) if lines else command
+
         script_content = f"""#!/usr/bin/env bash
-# 1. 提取并执行 ~/.bashrc 中由 conda init 写入的专属初始化配置块 (绕过任何非交互式 return 拦截)
+# 1. Extract and source conda initialize block from shell rc files
 for rc in "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.profile"; do
     if [ -f "$rc" ]; then
         eval "$(sed -n '/# >>> conda initialize >>>/,/# <<< conda initialize <<</p' "$rc" 2>/dev/null)"
     fi
 done
 
-# 2. 若尚未载入 conda 函数，通过 PATH 及系统路径动态查找并载入 conda.sh
+# 2. Locate and source conda.sh if conda function is not yet available
 if ! type conda >/dev/null 2>&1; then
-    for _d in "$HOME/miniconda3" "$HOME/anaconda3" "$HOME/miniconda" "$HOME/anaconda" "/opt/conda" "/data/home"/*/miniconda* "/data/home"/*/anaconda*; do
+    for _d in "$HOME/miniconda3" "$HOME/anaconda3" "$HOME/miniconda" "$HOME/anaconda" "/opt/conda" "$HOME/.conda" /data/home/*/miniconda* /data/home/*/anaconda*; do
         if [ -f "$_d/etc/profile.d/conda.sh" ]; then
             . "$_d/etc/profile.d/conda.sh"
             break
@@ -295,20 +311,61 @@ if ! type conda >/dev/null 2>&1; then
     done
 fi
 
-# 3. 注入 Conda Shell Hook (保证 conda activate 函数可用)
+# 3. Inject Conda Shell Hook
 if type conda >/dev/null 2>&1; then
     eval "$(conda shell.bash hook 2>/dev/null)" || true
 fi
 
-# 4. 加载系统与用户全量环境变量与代理 (去除非交互 return 限制后加载)
+# 4. Load system and user environment profiles
 [ -f /etc/profile ] && . /etc/profile 2>/dev/null
 [ -f ~/.profile ] && . ~/.profile 2>/dev/null
 if [ -f "$HOME/.bashrc" ]; then
     eval "$(sed -e 's/\\[ -z "\\$PS1" \\] && return//g' -e 's/case \\$- in \\*i\\*\\) ;; \\*\\) return;; esac//g' "$HOME/.bashrc" 2>/dev/null)" 2>/dev/null || true
 fi
 
-# 5. 顺序执行用户指令
-{command}
+# 5. Interactive terminal prompt generator and step-by-step runner
+_runmon_prompt() {{
+    local _env=""
+    if [ -n "$CONDA_DEFAULT_ENV" ]; then
+        _env="($CONDA_DEFAULT_ENV) "
+    elif [ -n "$VIRTUAL_ENV" ]; then
+        _env="($(basename "$VIRTUAL_ENV")) "
+    fi
+    local _u="${{USER:-$(id -un 2>/dev/null || whoami 2>/dev/null || echo user)}}"
+    local _h="$(hostname -s 2>/dev/null || hostname 2>/dev/null || echo localhost)"
+    local _cwd="$PWD"
+    local _disp_cwd="$_cwd"
+    if [ -n "$HOME" ]; then
+        if [ "$_cwd" = "$HOME" ]; then
+            _disp_cwd="~"
+        elif [[ "$_cwd" == "$HOME/"* ]]; then
+            _disp_cwd="~${{_cwd#$HOME}}"
+        fi
+    fi
+    local _sym="$"
+    if [ "${{EUID:-$(id -u 2>/dev/null)}}" = "0" ]; then
+        _sym="#"
+    fi
+    printf "\\033[00m%s\\033[01;32m%s@%s\\033[00m:\\033[01;34m%s\\033[00m%s " "$_env" "$_u" "$_h" "$_disp_cwd" "$_sym"
+}}
+
+_runmon_step() {{
+    local _cmd="$1"
+    [ -z "$_cmd" ] && return 0
+    _runmon_prompt
+    printf "%s\\n" "$_cmd"
+    eval "$_cmd"
+    local _ret=$?
+    [ $_ret -ne 0 ] && exit $_ret
+    return 0
+}}
+
+# 6. Sequentially execute user commands
+{exec_body}
+
+# 7. Print concluding terminal prompt
+_runmon_prompt
+printf "\\n"
 """
         script_file.write_text(script_content, encoding="utf-8")
         script_file.chmod(0o755)
