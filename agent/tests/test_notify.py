@@ -1,9 +1,9 @@
-import json
+﻿import json
 
-import runmon.notify as notify
-from runmon.config import Config
-from runmon.events import Event
-from runmon.store import RunStore
+import monitorgputool.notify as notify
+from monitorgputool.config import Config
+from monitorgputool.events import Event
+from monitorgputool.store import RunStore
 
 
 EV = Event(type="failed", level="critical", title="❌ train 失败", body="耗时 3分", run_id="abc")
@@ -134,3 +134,4 @@ def test_multi_channel_fanout(tmp_path):
     n.notify(EV)
     n.deliver_due()
     assert len(a.sent) == 1 and len(b.sent) == 1
+

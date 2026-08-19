@@ -1,4 +1,4 @@
-/// RunMon App 核心状态:配对信息持久化、每台服务器一条 WSS、E2EE 解密、数据分发。
+/// MonitorGpuTool App 核心状态:配对信息持久化、每台服务器一条 WSS、E2EE 解密、数据分发。
 library;
 
 import 'dart:async';
@@ -155,23 +155,23 @@ class _Conn {
             onChange();
           })
           .catchError((e) {
-            debugPrint('[runmon] ws 握手失败: $e');
+            debugPrint('[monitorgputool] ws 握手失败: $e');
           });
       ch.stream.listen(
         _onData,
         onDone: () {
           debugPrint(
-            '[runmon] ws 断开 code=${ch.closeCode} reason=${ch.closeReason}',
+            '[monitorgputool] ws 断开 code=${ch.closeCode} reason=${ch.closeReason}',
           );
           _scheduleReconnect();
         },
         onError: (e) {
-          debugPrint('[runmon] ws 错误: $e');
+          debugPrint('[monitorgputool] ws 错误: $e');
           _scheduleReconnect();
         },
       );
     } catch (e) {
-      debugPrint('[runmon] ws 连接异常: $e');
+      debugPrint('[monitorgputool] ws 连接异常: $e');
       _scheduleReconnect();
     }
   }
@@ -231,7 +231,7 @@ class _Conn {
                 appSettings.shouldNotify(data['type'] as String?)) {
               onNotice('${data['title']}\n${data['body']}');
               showEventNotification(
-                data['title'] as String? ?? 'RunMon',
+                data['title'] as String? ?? 'MonitorGpuTool',
                 data['body'] as String? ?? '',
               );
             }

@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "runmon"
+name = "monitorgputool"
 version = "1.0.7"
 description = "Long-job companion: phone notifications when your training finishes, fails, or silently hangs."
 readme = "README.md"
@@ -20,18 +20,19 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://runmon.linxiexie.com"
-Source = "https://github.com/murphy977/runmon"
-Issues = "https://github.com/murphy977/runmon/issues"
+Homepage = "https://github.com/murphy977/MonitorGpuTool"
+Source = "https://github.com/murphy977/MonitorGpuTool"
+Issues = "https://github.com/murphy977/MonitorGpuTool/issues"
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]
 
 [project.scripts]
-mon = "runmon.cli:main"
+mon = "monitorgputool.cli:main"
+monitorgputool = "monitorgputool.cli:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/runmon"]
+packages = ["src/monitorgputool"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

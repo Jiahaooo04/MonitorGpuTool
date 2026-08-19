@@ -1,7 +1,7 @@
-from runmon.config import Config
-from runmon.events import (COMPLETED, DISK_FULL, ERROR_PATTERN, FAILED, GPU_HANG,
+﻿from monitorgputool.config import Config
+from monitorgputool.events import (COMPLETED, DISK_FULL, ERROR_PATTERN, FAILED, GPU_HANG,
                            LOG_SILENCE, EventEngine, format_duration)
-from runmon.store import RunStore
+from monitorgputool.store import RunStore
 
 
 class FakeClock:
@@ -122,3 +122,4 @@ def test_deferred_event_is_recorded_only_after_enrichment(tmp_path):
     rows = store.events_since(0)
     assert len(rows) == 1
     assert "AI 分析:显存不足" in json.loads(rows[0]["payload"])["body"]
+

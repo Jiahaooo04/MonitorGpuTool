@@ -17,16 +17,16 @@ void main() {
   appSettings.load();
   snippetStore.load();
   initNotifications();
-  runApp(const RunMonApp());
+  runApp(const MonitorGpuToolApp());
 }
 
-class RunMonApp extends StatelessWidget {
-  const RunMonApp({super.key});
+class MonitorGpuToolApp extends StatelessWidget {
+  const MonitorGpuToolApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'RunMon',
+      title: 'MonitorGpuTool',
       debugShowCheckedModeBanner: false,
       theme: buildTheme(),
       home: const HomePage(),
@@ -69,7 +69,7 @@ class _HomePageState extends State<HomePage> {
             title: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('RunMon'),
+                const Text('MonitorGpuTool'),
                 const SizedBox(width: 7),
                 // 品牌记号:梨黄圆点
                 Container(
@@ -175,7 +175,7 @@ class _EmptyHome extends StatelessWidget {
                   borderRadius: BorderRadius.circular(Rm.radiusCard),
                 ),
                 child: Text(
-                  'pip install runmon\nmon pair',
+                  'pip install monitorgputool\nmon pair',
                   style: mono(size: 13, color: Rm.terminalText, height: 1.7),
                 ),
               ),

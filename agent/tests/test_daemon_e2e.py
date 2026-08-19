@@ -1,4 +1,4 @@
-"""全链路 E2E:mon daemon ←WSS→ relay ←WSS→ app 客户端,验证加密同步与指令回路。"""
+﻿"""全链路 E2E:mon daemon ←WSS→ relay ←WSS→ app 客户端,验证加密同步与指令回路。"""
 import asyncio
 import contextlib
 import json
@@ -11,10 +11,10 @@ import pytest
 import uvicorn
 from websockets.asyncio.client import connect as ws_async_connect
 
-from runmon.config import Config
-from runmon.crypto import decrypt, encrypt, generate_key, key_to_b64
-from runmon.relay_client import Daemon
-from runmon.store import RunStore
+from monitorgputool.config import Config
+from monitorgputool.crypto import decrypt, encrypt, generate_key, key_to_b64
+from monitorgputool.relay_client import Daemon
+from monitorgputool.store import RunStore
 from runmon_relay.app import create_app
 
 
@@ -42,7 +42,7 @@ def server(tmp_path):
 
 def test_full_chain(tmp_path, monkeypatch, server):
     base, relay_db = server
-    monkeypatch.setenv("RUNMON_DATA_DIR", str(tmp_path / "data"))
+    monkeypatch.setenv("MONITORGPUTOOL_DATA_DIR", str(tmp_path / "data"))
     store = RunStore(tmp_path / "agent.db")
     run = store.create_run(name="train-e2e-secret", command="c", cwd="", log_path="")
     store.append_output(run.id, "step 1 loss=0.5 SECRETMARKER\n", max_tail_chars=100000)
@@ -100,3 +100,4 @@ def test_full_chain(tmp_path, monkeypatch, server):
             blob += wal.read_bytes()
     assert b"train-e2e-secret" not in blob
     assert b"SECRETMARKER" not in blob
+

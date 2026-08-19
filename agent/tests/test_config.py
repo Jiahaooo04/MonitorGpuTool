@@ -1,6 +1,6 @@
-from pathlib import Path
+﻿from pathlib import Path
 
-from runmon.config import Config, config_path, data_dir
+from monitorgputool.config import Config, config_path, data_dir
 
 
 def test_defaults():
@@ -46,9 +46,10 @@ def test_load_missing_returns_defaults(tmp_path):
 
 
 def test_env_paths(monkeypatch, tmp_path):
-    monkeypatch.setenv("RUNMON_CONFIG", str(tmp_path / "c.toml"))
-    monkeypatch.setenv("RUNMON_DATA_DIR", str(tmp_path / "data"))
+    monkeypatch.setenv("MONITORGPUTOOL_CONFIG", str(tmp_path / "c.toml"))
+    monkeypatch.setenv("MONITORGPUTOOL_DATA_DIR", str(tmp_path / "data"))
     assert config_path() == tmp_path / "c.toml"
     d = data_dir()
     assert d == tmp_path / "data"
     assert (d / "logs").is_dir()
+

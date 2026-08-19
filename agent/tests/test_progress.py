@@ -1,4 +1,4 @@
-from runmon.progress import ProgressParser, parse_eta
+﻿from monitorgputool.progress import ProgressParser, parse_eta
 
 
 def test_parse_eta():
@@ -29,3 +29,4 @@ def test_scientific_loss_and_no_match():
     p = ProgressParser()
     assert p.feed("loss: 3.5e-05") and p.state.loss == 3.5e-05
     assert not p.feed("nothing to see here")
+

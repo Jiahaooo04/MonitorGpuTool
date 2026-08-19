@@ -1,9 +1,9 @@
 import json
 
-from runmon.config import Config
-from runmon.gpuwait import GpuWaiter, HoldTracker, WaitSpec, qualified
-from runmon.sampler import GpuSample
-from runmon.store import RunStore
+from monitorgputool.config import Config
+from monitorgputool.gpuwait import GpuWaiter, HoldTracker, WaitSpec, qualified
+from monitorgputool.sampler import GpuSample
+from monitorgputool.store import RunStore
 
 
 class FakeClock:
@@ -72,8 +72,8 @@ def test_waiter_fires_after_hold(tmp_path):
 
 
 def test_wait_requires_gpu(monkeypatch, capsys):
-    import runmon.sampler as sampler
-    from runmon.cli import main
+    import monitorgputool.sampler as sampler
+    from monitorgputool.cli import main
     monkeypatch.setattr(sampler, "_NVML", False)
     assert main(["wait"]) == 1
     assert "NVIDIA" in capsys.readouterr().err
@@ -86,8 +86,8 @@ def hbg(index, used, total=81920, util=0):
 
 
 def test_set_watch_validation(tmp_path, monkeypatch):
-    monkeypatch.setenv("RUNMON_DATA_DIR", str(tmp_path))
-    from runmon import gpuwait
+    monkeypatch.setenv("MONITORGPUTOOL_DATA_DIR", str(tmp_path))
+    from monitorgputool import gpuwait
     assert not gpuwait.set_watch({"cards": {}})["ok"]
     assert not gpuwait.set_watch({"cards": {"a": 1}})["ok"]
     assert gpuwait.set_watch({"cards": {"0": None, "2": 30}})["ok"]
@@ -95,11 +95,11 @@ def test_set_watch_validation(tmp_path, monkeypatch):
 
 
 def test_set_watch_command_gate(tmp_path, monkeypatch):
-    monkeypatch.setenv("RUNMON_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("MONITORGPUTOOL_DATA_DIR", str(tmp_path))
     cfg = tmp_path / "c.toml"
     cfg.write_text("enable_terminal = false\n", encoding="utf-8")
-    monkeypatch.setenv("RUNMON_CONFIG", str(cfg))
-    from runmon import gpuwait
+    monkeypatch.setenv("MONITORGPUTOOL_CONFIG", str(cfg))
+    from monitorgputool import gpuwait
     r = gpuwait.set_watch({"cards": {"0": None}, "command": "python x.py"})
     assert not r["ok"] and "enable_terminal" in r["error"]
     # 不带命令则允许
@@ -107,8 +107,8 @@ def test_set_watch_command_gate(tmp_path, monkeypatch):
 
 
 def test_watch_manager_fires_once(tmp_path, monkeypatch):
-    monkeypatch.setenv("RUNMON_DATA_DIR", str(tmp_path))
-    from runmon import gpuwait
+    monkeypatch.setenv("MONITORGPUTOOL_DATA_DIR", str(tmp_path))
+    from monitorgputool import gpuwait
     assert gpuwait.set_watch(
         {"cards": {"0": None, "2": 30}, "hold_minutes": 1})["ok"]
     store = RunStore(tmp_path / "t.db")
@@ -132,8 +132,8 @@ def test_watch_manager_fires_once(tmp_path, monkeypatch):
 
 
 def test_watch_missing_card_not_ok(tmp_path, monkeypatch):
-    monkeypatch.setenv("RUNMON_DATA_DIR", str(tmp_path))
-    from runmon import gpuwait
+    monkeypatch.setenv("MONITORGPUTOOL_DATA_DIR", str(tmp_path))
+    from monitorgputool import gpuwait
     gpuwait.set_watch({"cards": {"5": None}, "hold_minutes": 0})
     mgr = gpuwait.GpuWatchManager(RunStore(tmp_path / "t.db"), Config(),
                                   clock=FakeClock())
@@ -142,8 +142,8 @@ def test_watch_missing_card_not_ok(tmp_path, monkeypatch):
 
 
 def test_watch_launch_script_contains_terminal_runner(tmp_path, monkeypatch):
-    monkeypatch.setenv("RUNMON_DATA_DIR", str(tmp_path))
-    from runmon import gpuwait
+    monkeypatch.setenv("MONITORGPUTOOL_DATA_DIR", str(tmp_path))
+    from monitorgputool import gpuwait
     mgr = gpuwait.GpuWatchManager(RunStore(tmp_path / "t.db"), Config())
 
     recorded_scripts = []
@@ -159,14 +159,14 @@ def test_watch_launch_script_contains_terminal_runner(tmp_path, monkeypatch):
     assert mgr._launch("python train.py --epochs 10", "训练任务", "0")
     assert len(recorded_scripts) == 1
     script = recorded_scripts[0]
-    assert "_runmon_prompt()" in script
-    assert "_runmon_step()" in script
-    assert "_runmon_step 'python train.py --epochs 10'" in script
+    assert "_monitorgputool_prompt()" in script
+    assert "_monitorgputool_step()" in script
+    assert "_monitorgputool_step 'python train.py --epochs 10'" in script
 
 
 def test_watch_launch_script_multi_step_sequential(tmp_path, monkeypatch):
-    monkeypatch.setenv("RUNMON_DATA_DIR", str(tmp_path))
-    from runmon import gpuwait
+    monkeypatch.setenv("MONITORGPUTOOL_DATA_DIR", str(tmp_path))
+    from monitorgputool import gpuwait
     mgr = gpuwait.GpuWatchManager(RunStore(tmp_path / "t.db"), Config())
 
     recorded_scripts = []
@@ -183,8 +183,10 @@ def test_watch_launch_script_multi_step_sequential(tmp_path, monkeypatch):
     assert mgr._launch(cmd, "分步任务", "0")
     assert len(recorded_scripts) == 1
     script = recorded_scripts[0]
-    assert "_runmon_step 'cd /data/project'" in script
-    assert "_runmon_step 'conda activate train_env'" in script
-    assert "_runmon_step 'python train.py'" in script
+    assert "_monitorgputool_step 'cd /data/project'" in script
+    assert "_monitorgputool_step 'conda activate train_env'" in script
+    assert "_monitorgputool_step 'python train.py'" in script
+
+
 
 

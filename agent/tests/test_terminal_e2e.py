@@ -1,4 +1,4 @@
-"""交互终端全链路:App 端发 term_open + term_input,收到 pty 输出。"""
+﻿"""交互终端全链路:App 端发 term_open + term_input,收到 pty 输出。"""
 import asyncio
 import json
 import socket
@@ -10,10 +10,10 @@ import pytest
 import uvicorn
 from websockets.asyncio.client import connect as ws_connect
 
-from runmon.config import Config
-from runmon.crypto import decrypt, encrypt, generate_key, key_to_b64
-from runmon.relay_client import Daemon
-from runmon.store import RunStore
+from monitorgputool.config import Config
+from monitorgputool.crypto import decrypt, encrypt, generate_key, key_to_b64
+from monitorgputool.relay_client import Daemon
+from monitorgputool.store import RunStore
 from runmon_relay.app import create_app
 
 
@@ -121,3 +121,4 @@ def test_terminal_hard_disabled(tmp_path, server):
                 pass
 
     asyncio.run(main())
+

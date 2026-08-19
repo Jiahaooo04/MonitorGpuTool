@@ -142,7 +142,7 @@ class SettingsPage extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Center(
-              child: Text('RunMon · 长任务陪伴器',
+              child: Text('MonitorGpuTool · GPU与长任务监控陪伴器',
                   style: mono(size: 11.5, color: Rm.inkFaint)),
             ),
           ],

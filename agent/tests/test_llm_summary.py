@@ -1,6 +1,6 @@
-import json
+﻿import json
 
-from runmon.llm_summary import (
+from monitorgputool.llm_summary import (
     LLMSummarizer,
     _should_bypass_system_proxy,
     redact_secrets,
@@ -194,3 +194,4 @@ def test_domestic_and_local_providers_bypass_broken_system_proxy():
         "base_url": "https://api.deepseek.com",
         "use_system_proxy": True,
     })
+

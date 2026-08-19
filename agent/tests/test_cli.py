@@ -1,17 +1,17 @@
-import subprocess
+﻿import subprocess
 import sys
 import time as _time
 
 import pytest
 
-from runmon import cli
-from runmon.store import RunStore
+from monitorgputool import cli
+from monitorgputool.store import RunStore
 
 
 @pytest.fixture()
 def isolated(tmp_path, monkeypatch):
-    monkeypatch.setenv("RUNMON_DATA_DIR", str(tmp_path / "data"))
-    monkeypatch.setenv("RUNMON_CONFIG", str(tmp_path / "config.toml"))
+    monkeypatch.setenv("MONITORGPUTOOL_DATA_DIR", str(tmp_path / "data"))
+    monkeypatch.setenv("MONITORGPUTOOL_CONFIG", str(tmp_path / "config.toml"))
     return tmp_path
 
 
@@ -73,7 +73,7 @@ def test_init_writes_channels(isolated):
     rc = cli.main(["init", "--ntfy-topic", "mytopic", "--webhook", "http://h/x",
                    "--telegram", "BOT:42", "--no-test"])
     assert rc == 0
-    from runmon.config import Config
+    from monitorgputool.config import Config
     cfg = Config.load()
     types = {c["type"] for c in cfg.channels}
     assert types == {"ntfy", "webhook", "telegram"}
@@ -84,14 +84,15 @@ def test_init_writes_channels(isolated):
 def test_init_reset_replaces(isolated):
     cli.main(["init", "--webhook", "http://a", "--no-test"])
     cli.main(["init", "--reset", "--webhook", "http://b", "--no-test"])
-    from runmon.config import Config
+    from monitorgputool.config import Config
     cfg = Config.load()
     assert len(cfg.channels) == 1 and cfg.channels[0]["url"] == "http://b"
 
 
 def test_init_sends_test_notification(isolated, monkeypatch):
     sent = []
-    import runmon.notify as notify
+    import monitorgputool.notify as notify
     monkeypatch.setattr(notify, "_post", lambda url, data, headers: sent.append(url))
     rc = cli.main(["init", "--ntfy-topic", "t"])
     assert rc == 0 and len(sent) == 1
+

@@ -1,4 +1,4 @@
-import json
+﻿import json
 import subprocess
 import sys
 import time
@@ -6,16 +6,16 @@ from types import SimpleNamespace
 
 import pytest
 
-from runmon import relay_client, sampler
-from runmon.crypto import decrypt, generate_key
-from runmon.relay_client import SyncState, compute_sync_messages, handle_command, heartbeat_payload
-from runmon.sampler import GpuSample
-from runmon.store import RunStore
+from monitorgputool import relay_client, sampler
+from monitorgputool.crypto import decrypt, generate_key
+from monitorgputool.relay_client import SyncState, compute_sync_messages, handle_command, heartbeat_payload
+from monitorgputool.sampler import GpuSample
+from monitorgputool.store import RunStore
 
 
 @pytest.fixture()
 def store(tmp_path, monkeypatch):
-    monkeypatch.setenv("RUNMON_DATA_DIR", str(tmp_path / "data"))
+    monkeypatch.setenv("MONITORGPUTOOL_DATA_DIR", str(tmp_path / "data"))
     return RunStore(tmp_path / "t.db")
 
 
@@ -122,8 +122,8 @@ def test_handle_delete_run(store, tmp_path):
 
 
 def test_handle_config_set(store, tmp_path, monkeypatch):
-    monkeypatch.setenv("RUNMON_CONFIG", str(tmp_path / "cfg.toml"))
-    from runmon.config import Config
+    monkeypatch.setenv("MONITORGPUTOOL_CONFIG", str(tmp_path / "cfg.toml"))
+    from monitorgputool.config import Config
     res = handle_command(store, {"op": "config_set",
                                  "args": {"disk_threshold_pct": 85}})
     assert res["ok"] is True
@@ -137,8 +137,8 @@ def test_handle_config_set(store, tmp_path, monkeypatch):
 
 def test_handle_llm_config_is_per_agent_and_never_returns_key(
         store, tmp_path, monkeypatch):
-    monkeypatch.setenv("RUNMON_CONFIG", str(tmp_path / "cfg.toml"))
-    from runmon.config import Config
+    monkeypatch.setenv("MONITORGPUTOOL_CONFIG", str(tmp_path / "cfg.toml"))
+    from monitorgputool.config import Config
 
     saved = handle_command(store, {
         "op": "llm_config_set",
@@ -184,7 +184,7 @@ def test_handle_llm_config_is_per_agent_and_never_returns_key(
 
 def test_handle_llm_test_uses_unsaved_form_values(
         store, tmp_path, monkeypatch):
-    monkeypatch.setenv("RUNMON_CONFIG", str(tmp_path / "cfg.toml"))
+    monkeypatch.setenv("MONITORGPUTOOL_CONFIG", str(tmp_path / "cfg.toml"))
     captured = {}
 
     def fake_test(self):
@@ -192,7 +192,7 @@ def test_handle_llm_test_uses_unsaved_form_values(
         return {"ok": True, "summary": "接口正常"}
 
     monkeypatch.setattr(
-        "runmon.llm_summary.LLMSummarizer.test_connection", fake_test
+        "monitorgputool.llm_summary.LLMSummarizer.test_connection", fake_test
     )
 
     result = handle_command(store, {
@@ -212,12 +212,12 @@ def test_handle_llm_test_uses_unsaved_form_values(
     }
     assert captured["enabled"] is True
     assert captured["api_key"] == "temporary-secret"
-    from runmon.config import Config
+    from monitorgputool.config import Config
     assert Config.load().llm == {}
 
 
 def test_handle_llm_rejects_invalid_endpoint(store, tmp_path, monkeypatch):
-    monkeypatch.setenv("RUNMON_CONFIG", str(tmp_path / "cfg.toml"))
+    monkeypatch.setenv("MONITORGPUTOOL_CONFIG", str(tmp_path / "cfg.toml"))
 
     result = handle_command(store, {
         "op": "llm_config_set",
@@ -297,3 +297,4 @@ def test_heartbeat_includes_safe_gpu_process_summaries(monkeypatch):
     assert payload["gpus"][1]["processes"] == []
     assert "command" not in json.dumps(payload)
     assert "cmdline" not in json.dumps(payload)
+

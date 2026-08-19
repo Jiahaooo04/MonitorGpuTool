@@ -1,4 +1,4 @@
-from runmon.store import RunStore
+﻿from monitorgputool.store import RunStore
 
 
 def make_store(tmp_path):
@@ -100,9 +100,10 @@ def test_event_payload_and_since(tmp_path):
 
 
 def test_max_event_id(tmp_path):
-    from runmon.store import RunStore
+    from monitorgputool.store import RunStore
     store = RunStore(tmp_path / "m.db")
     assert store.max_event_id() == 0
     store.record_event(None, "test", 1.0, payload="{}")
     store.record_event(None, "test", 2.0, payload="{}")
     assert store.max_event_id() == 2
+

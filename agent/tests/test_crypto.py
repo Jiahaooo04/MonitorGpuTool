@@ -1,6 +1,6 @@
-import pytest
+﻿import pytest
 
-from runmon.crypto import decrypt, encrypt, generate_key, key_from_b64, key_to_b64
+from monitorgputool.crypto import decrypt, encrypt, generate_key, key_from_b64, key_to_b64
 
 
 def test_roundtrip():
@@ -35,3 +35,4 @@ def test_wrong_key_fails():
     env = encrypt({"a": 1}, generate_key())
     with pytest.raises(Exception):
         decrypt(env, generate_key())
+

@@ -1,4 +1,4 @@
-/// RunMon 支持的 OpenAI 兼容供应商预设。
+/// MonitorGpuTool 支持的 OpenAI 兼容供应商预设。
 library;
 
 class LlmProviderPreset {

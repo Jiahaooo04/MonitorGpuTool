@@ -1,17 +1,17 @@
-import http.server
+﻿import http.server
 import json
 import sys
 import threading
 
 import pytest
 
-from runmon import cli
+from monitorgputool import cli
 
 
 @pytest.fixture()
 def isolated(tmp_path, monkeypatch):
-    monkeypatch.setenv("RUNMON_DATA_DIR", str(tmp_path / "data"))
-    monkeypatch.setenv("RUNMON_CONFIG", str(tmp_path / "config.toml"))
+    monkeypatch.setenv("MONITORGPUTOOL_DATA_DIR", str(tmp_path / "data"))
+    monkeypatch.setenv("MONITORGPUTOOL_CONFIG", str(tmp_path / "config.toml"))
     return tmp_path
 
 
@@ -39,7 +39,7 @@ def test_demo_success_notifies(isolated, webhook_server):
     url, received = webhook_server
     cli.main(["init", "--webhook", url, "--no-test"])
     rc = cli.main(["run", "--name", "demo-ok", "--",
-                   sys.executable, "-m", "runmon.demo_train",
+                   sys.executable, "-m", "monitorgputool.demo_train",
                    "--epochs", "1", "--steps", "5", "--delay", "0.01"])
     assert rc == 0
     types = [p["type"] for p in received]
@@ -50,7 +50,7 @@ def test_demo_fail_notifies(isolated, webhook_server):
     url, received = webhook_server
     cli.main(["init", "--webhook", url, "--no-test"])
     rc = cli.main(["run", "--name", "demo-fail", "--",
-                   sys.executable, "-m", "runmon.demo_train",
+                   sys.executable, "-m", "monitorgputool.demo_train",
                    "--epochs", "1", "--steps", "10", "--delay", "0.01", "--fail"])
     assert rc != 0
     types = [p["type"] for p in received]
@@ -59,9 +59,10 @@ def test_demo_fail_notifies(isolated, webhook_server):
 
 def test_demo_records_progress(isolated):
     cli.main(["run", "--name", "demo-prog", "--",
-              sys.executable, "-m", "runmon.demo_train",
+              sys.executable, "-m", "monitorgputool.demo_train",
               "--epochs", "1", "--steps", "10", "--delay", "0.01"])
-    from runmon.store import RunStore
+    from monitorgputool.store import RunStore
     run = RunStore().resolve_run("demo-prog")
     assert run.progress == 100.0 and run.last_loss is not None
     assert run.eta_seconds is None
+

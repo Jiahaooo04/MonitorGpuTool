@@ -95,7 +95,7 @@ class _UpdateDialogState extends State<_UpdateDialog> {
     try {
       final dir = await getExternalStorageDirectory() ??
           await getTemporaryDirectory();
-      final file = File('${dir.path}/RunMon-${widget.info.version}.apk');
+      final file = File('${dir.path}/MonitorGpuTool-${widget.info.version}.apk');
       final resp =
           await http.Client().send(http.Request('GET', Uri.parse(widget.info.url)));
       final total = resp.contentLength ?? 0;

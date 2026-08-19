@@ -1,11 +1,11 @@
-import os
+﻿import os
 import subprocess
 import sys
 import time
 from types import SimpleNamespace
 
-from runmon import sampler
-from runmon.sampler import GpuSample, disk_usage, process_tree, util_for_indices, util_for_pids
+from monitorgputool import sampler
+from monitorgputool.sampler import GpuSample, disk_usage, process_tree, util_for_indices, util_for_pids
 
 
 def gs(index, util, pids):
@@ -98,3 +98,4 @@ def test_sample_processes_skips_gone_or_inaccessible_pids(monkeypatch):
     sampler._PROCESS_CPU.clear()
 
     assert sampler.sample_processes({1, 2}) == {}
+

@@ -1,12 +1,12 @@
-import json
+﻿import json
 import sys
 
 import pytest
 
-from runmon.config import Config, data_dir
-from runmon.notify import Notifier
-from runmon.runner import RunWrapper
-from runmon.store import RunStore
+from monitorgputool.config import Config, data_dir
+from monitorgputool.notify import Notifier
+from monitorgputool.runner import RunWrapper
+from monitorgputool.store import RunStore
 
 
 class MemoryChannel:
@@ -32,7 +32,7 @@ class FakeSummarizer:
 
 @pytest.fixture()
 def env(tmp_path, monkeypatch):
-    monkeypatch.setenv("RUNMON_DATA_DIR", str(tmp_path / "data"))
+    monkeypatch.setenv("MONITORGPUTOOL_DATA_DIR", str(tmp_path / "data"))
     store = RunStore(tmp_path / "t.db")
     ch = MemoryChannel()
     notifier = Notifier(store, [ch])
@@ -60,7 +60,7 @@ def test_success_run(env):
 
 def test_error_warning_merges_into_immediate_failure_without_llm(
         env, monkeypatch):
-    import runmon.runner as runner_mod
+    import monitorgputool.runner as runner_mod
     monkeypatch.setattr(
         runner_mod, "ERROR_MERGE_GRACE_SECONDS", 0.05
     )
@@ -76,7 +76,7 @@ def test_error_warning_merges_into_immediate_failure_without_llm(
 
 def test_error_warning_still_emits_without_llm_when_task_keeps_running(
         env, monkeypatch):
-    import runmon.runner as runner_mod
+    import monitorgputool.runner as runner_mod
     monkeypatch.setattr(
         runner_mod, "ERROR_MERGE_GRACE_SECONDS", 0.02
     )
@@ -98,7 +98,7 @@ time.sleep(0.1)
 
 
 def test_llm_error_warning_merges_into_immediate_failure(env, monkeypatch):
-    import runmon.runner as runner_mod
+    import monitorgputool.runner as runner_mod
     monkeypatch.setattr(
         runner_mod, "ERROR_MERGE_GRACE_SECONDS", 0.05, raising=False
     )
@@ -132,7 +132,7 @@ def test_llm_error_warning_merges_into_immediate_failure(env, monkeypatch):
 
 def test_llm_error_warning_still_emits_when_task_keeps_running(
         env, monkeypatch):
-    import runmon.runner as runner_mod
+    import monitorgputool.runner as runner_mod
     monkeypatch.setattr(
         runner_mod, "ERROR_MERGE_GRACE_SECONDS", 0.02, raising=False
     )
@@ -168,7 +168,7 @@ sys.stdout.write("50%|-----| 50/100 [00:10<00:10,  5.0it/s] loss=0.5\n")
 
 def test_monitor_disk_event(env, monkeypatch):
     store, ch, notifier = env
-    import runmon.runner as runner_mod
+    import monitorgputool.runner as runner_mod
     monkeypatch.setattr(runner_mod.sampler, "disk_usage", lambda: [("/", 99.0)])
     monkeypatch.setattr(runner_mod.sampler, "sample_gpus", lambda: [])
     cfg = Config(sample_interval_s=0)        # 立即采样
@@ -182,3 +182,4 @@ def test_default_name_is_command(env):
     w, store, _ = make_wrapper(env, "pass")
     w.execute()
     assert "-c" in store.get_run(w.run.id).name
+
