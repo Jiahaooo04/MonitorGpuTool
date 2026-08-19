@@ -311,7 +311,18 @@ class Daemon:
             hb["gpu_watch"] = {"error": str(exc)}
         return hb
 
+    def ws_url(self) -> str:
+        u = self.url.rstrip("/")
+        if u.startswith("https://"):
+            return "wss://" + u[8:] + "/ws/agent"
+        if u.startswith("http://"):
+            return "ws://" + u[7:] + "/ws/agent"
+        if u.startswith("wss://") or u.startswith("ws://"):
+            return u + "/ws/agent"
+        return f"wss://{u}/ws/agent"
+
     async def run_forever(self) -> None:
+        import websockets
         backoff = 1.0
         while True:
             try:

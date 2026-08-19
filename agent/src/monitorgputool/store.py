@@ -83,7 +83,14 @@ class RunRecord:
 
 class RunStore:
     def __init__(self, db_path: Path | str | None = None) -> None:
-        self.db_path = Path(db_path) if db_path else data_dir() / "runmon.db"
+        if db_path:
+            self.db_path = Path(db_path)
+        else:
+            p = data_dir() / "monitorgputool.db"
+            if not p.exists() and (data_dir() / "runmon.db").exists():
+                self.db_path = data_dir() / "runmon.db"
+            else:
+                self.db_path = p
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self._lock = threading.Lock()
         self._conn = sqlite3.connect(str(self.db_path), check_same_thread=False)

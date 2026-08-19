@@ -138,10 +138,14 @@ class LLMSummarizer:
         direct = str(self.config.get("api_key", "")).strip()
         if direct:
             return direct
-        env_name = str(
-            self.config.get("api_key_env", "RUNMON_LLM_API_KEY")
+        env_name = str(self.config.get("api_key_env", "")).strip()
+        if env_name and self.environ.get(env_name):
+            return str(self.environ.get(env_name, "")).strip()
+        return str(
+            self.environ.get("MONITORGPUTOOL_LLM_API_KEY")
+            or self.environ.get("RUNMON_LLM_API_KEY")
+            or ""
         ).strip()
-        return str(self.environ.get(env_name, "")).strip() if env_name else ""
 
     def summarize(
         self,
@@ -227,7 +231,7 @@ class LLMSummarizer:
 
         headers = {
             "Content-Type": "application/json",
-            "User-Agent": f"runmon/{__version__}",
+            "User-Agent": f"monitorgputool/{__version__}",
         }
         api_key = self._api_key()
         if api_key:

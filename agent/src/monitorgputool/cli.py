@@ -43,7 +43,7 @@ def cmd_wait(args) -> int:
     if args.detach:
         import subprocess
         from .config import data_dir
-        argv = [sys.executable, "-m", "runmon", "wait",
+        argv = [sys.executable, "-m", "monitorgputool", "wait",
                 "--gpus", str(args.gpus), "--hold", str(args.hold)]
         if args.free_gb is not None:
             argv += ["--free-gb", str(args.free_gb)]
@@ -115,7 +115,10 @@ def stop_run(store: RunStore, ident: str, escalate_wait: float = 10.0) -> bool:
         except psutil.NoSuchProcess:
             return False
 
-    for sig in (signal.SIGINT, signal.SIGTERM, signal.SIGKILL):
+    signals = [signal.SIGINT, signal.SIGTERM]
+    if hasattr(signal, "SIGKILL"):
+        signals.append(signal.SIGKILL)
+    for sig in signals:
         if not alive():
             break
         try:
@@ -217,7 +220,7 @@ def _relay_post(url: str, path: str, body: dict) -> dict:
     req = urllib.request.Request(url.rstrip("/") + path,
                                  data=json.dumps(body).encode(),
                                  headers={"Content-Type": "application/json",
-                                          "User-Agent": f"runmon/{__version__}"})
+                                          "User-Agent": f"monitorgputool/{__version__}"})
     with urllib.request.urlopen(req, timeout=10) as resp:
         return json.loads(resp.read())
 
@@ -283,7 +286,7 @@ def cmd_daemon(args) -> int:
         # 重新以自身在新会话里前台启动 daemon,脱离当前终端(关 SSH 也不停)
         with open(log, "ab") as f:
             proc = subprocess.Popen(
-                [sys.executable, "-m", "runmon", "daemon"],
+                [sys.executable, "-m", "monitorgputool", "daemon"],
                 stdout=f, stderr=f, stdin=subprocess.DEVNULL,
                 start_new_session=True)
         print(f"[mon daemon] 已在后台运行 (pid {proc.pid})")
@@ -352,17 +355,17 @@ def cmd_logs(args) -> int:
 
 
 def cmd_demo(args) -> int:
-    demo_args = [sys.executable, "-m", "runmon.demo_train"]
+    demo_args = [sys.executable, "-m", "monitorgputool.demo_train"]
     if args.fail:
         demo_args.append("--fail")
     if args.hang:
         demo_args.append("--hang")
     from .runner import RunWrapper
-    return RunWrapper(demo_args, name="runmon-demo").execute()
+    return RunWrapper(demo_args, name="monitorgputool-demo").execute()
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="mon", description="RunMon — 长任务陪伴器")
+    parser = argparse.ArgumentParser(prog="mon", description="MonitorGpuTool — 长任务陪伴器")
     sub = parser.add_subparsers(dest="cmd")
 
     p_run = sub.add_parser("run", help="包装并监控一个命令")
