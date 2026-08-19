@@ -14,7 +14,7 @@ from pathlib import Path
 
 
 DEFAULT_DOWNLOAD_URL = (
-    "https://runmon.linxiexie.com/downloads/RunMon-arm64.apk"
+    "https://runmon.linxiexie.com/downloads/MonitorGpuTool-arm64.apk"
 )
 
 

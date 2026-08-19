@@ -123,7 +123,7 @@ mon pair --relay https://mon.example.com
 日常在 GPU 服务器上用的是 agent 那个包:
 
 ```bash
-pip install runmon
+pip install monitorgputool
 ```
 
 完整介绍、手机 App 下载和快速开始见 **[项目主页](https://runmon.linxiexie.com)** 和 **[GitHub 仓库](https://github.com/murphy977/runmon)**。

@@ -4,11 +4,11 @@
 
 </div>
 
-# RunMon · Long-job Companion
+# MonitorGpuTool · Long-job & GPU Companion
 
 **Monitor the training runs, crawlers, and long scripts on your server — live, from your phone.** Still running? Is the GPU actually working? Finished yet? — know the instant something breaks. End-to-end encrypted, self-hosted, zero-instrumentation.
 
-> A training run errors out halfway through and the GPU sits idle for hours with nobody noticing; you keep meaning to SSH in and check — at dinner, in bed. RunMon exists to kill that feeling.
+> A training run errors out halfway through and the GPU sits idle for hours with nobody noticing; you keep meaning to SSH in and check — at dinner, in bed. MonitorGpuTool exists to kill that feeling.
 
 `v1.0.7` · Python + Flutter · MIT · end-to-end encrypted
 
@@ -30,11 +30,11 @@
 
 ### Watch a job live on your phone
 
-**1. Install the app** — grab `RunMon-arm64.apk` from [Releases](../../releases) (modern Android is all arm64).
+**1. Install the app** — grab `MonitorGpuTool-arm64.apk` from [Releases](../../releases) (modern Android is all arm64).
 
 **2. On the server — install, pair, keep the connection alive**
 ```bash
-pip install runmon
+pip install monitorgputool
 mon pair       # prints a QR code — scan it in the app (uses a public relay by default)
 mon daemon     # keep this running; the phone sees live data only while it's up
 ```
@@ -48,12 +48,12 @@ Open the app and you'll see the live terminal, GPU/CPU/memory curves, progress/E
 
 > **Tip:** `mon daemon` runs in the foreground; add `-d` (`mon daemon -d`) to detach it to the background, or run it in `tmux` / `nohup`, so it survives closing your SSH session.
 >
-> **conda users:** `mon` is a system-level tool — no need to install it into every virtual env. `pipx install runmon` installs it once, globally available, no reinstalling when you switch envs.
+> **conda users:** `mon` is a system-level tool — no need to install it into every virtual env. `pipx install monitorgputool` installs it once, globally available, no reinstalling when you switch envs.
 
 ### Just want notifications? (no app needed)
 
 ```bash
-pip install runmon
+pip install monitorgputool
 mon init --wecom-key <webhook>   # or --bark-key / --ntfy-topic / --telegram
 mon run -- python train.py       # phone buzzes on done / fail / stall / …
 ```
@@ -73,12 +73,12 @@ The condition must **hold for 3 minutes** before firing (tune with `--hold`), so
 
 ```
  GPU server(s)                     relay (self-hosted)          phone
-┌────────────────┐          ┌─────────────┐          ┌──────────────┐
-│ runmon agent    │──out WSS→ │   FastAPI   │ ←out WSS─│  Flutter App │
-│ mon run/attach  │          │ ciphertext  │          │ panel/charts │
-│ GPU/event engine│          │    only     │          │  /terminal   │
-│ notify direct ──┼──out────→ ntfy / Bark / Telegram ──→ guaranteed push
-└────────────────┘
+┌────────────────────┐          ┌─────────────┐          ┌──────────────┐
+│ monitorgputool     │──out WSS→ │   FastAPI   │ ←out WSS─│  Flutter App │
+│ mon run/attach     │          │ ciphertext  │          │ panel/charts │
+│ GPU/event engine   │          │    only     │          │  /terminal   │
+│ notify direct ─────┼──out────→ ntfy / Bark / Telegram ──→ guaranteed push
+└────────────────────┘
 ```
 
 - **All outbound** — neither the server nor the phone needs a public IP or the same LAN; the relay is the only party with a public address
@@ -100,7 +100,7 @@ For production, put it behind an nginx subdomain (with WebSocket upgrade) + a ce
 
 | Directory | Contents |
 |---|---|
-| `agent/` | Python package `runmon`, CLI `mon` |
+| `agent/` | Python package `monitorgputool`, CLI `mon` / `monitorgputool` |
 | `relay/` | Python package `runmon-relay`, FastAPI relay |
 | `app/` | Flutter mobile app (Android, reusable for iOS) |
 

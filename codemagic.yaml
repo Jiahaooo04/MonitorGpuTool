@@ -1,6 +1,6 @@
 workflows:
   ios-build:
-    name: Build RunMon iOS IPA
+    name: Build MonitorGpuTool iOS IPA
     max_build_duration: 30
     instance_type: mac_mini_m1
     environment:
@@ -13,17 +13,17 @@ workflows:
         script: |
           # 1. Ensure Flutter dependencies and generate iOS project with clean project name (no underscore)
           flutter pub get
-          flutter create --platforms=ios --org com.runmon --project-name runmon .
+          flutter create --platforms=ios --org dev.monitorgputool --project-name monitorgputool_app .
           dart run flutter_launcher_icons
 
           # 2. Safely configure Info.plist (Camera permission & clean App Name for Apple Developer API)
           PLIST="ios/Runner/Info.plist"
           /usr/libexec/PlistBuddy -c "Delete :NSCameraUsageDescription" "$PLIST" 2>/dev/null || true
-          /usr/libexec/PlistBuddy -c "Add :NSCameraUsageDescription string 'RunMon requires camera access to scan server QR codes for pairing.'" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :NSCameraUsageDescription string 'MonitorGpuTool requires camera access to scan server QR codes for pairing.'" "$PLIST"
           
           # Fix Developer error 35: App Name cannot contain underscores
-          /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName RunMon" "$PLIST" 2>/dev/null || /usr/libexec/PlistBuddy -c "Add :CFBundleDisplayName string 'RunMon'" "$PLIST"
-          /usr/libexec/PlistBuddy -c "Set :CFBundleName RunMon" "$PLIST" 2>/dev/null || /usr/libexec/PlistBuddy -c "Add :CFBundleName string 'RunMon'" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName MonitorGpuTool" "$PLIST" 2>/dev/null || /usr/libexec/PlistBuddy -c "Add :CFBundleDisplayName string 'MonitorGpuTool'" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleName MonitorGpuTool" "$PLIST" 2>/dev/null || /usr/libexec/PlistBuddy -c "Add :CFBundleName string 'MonitorGpuTool'" "$PLIST"
 
           # 3. Update Podfile deployment target to 13.0 for modern plugin compatibility
           sed -i '' "s/# platform :ios, '12.0'/platform :ios, '13.0'/g" ios/Podfile || true
@@ -50,12 +50,12 @@ workflows:
           fi
 
           echo "Packaging from: $APP_PATH"
-          rm -rf Payload RunMon.ipa
+          rm -rf Payload MonitorGpuTool.ipa
           mkdir -p Payload
           cp -r "$APP_PATH" Payload/
-          zip -r -9 RunMon.ipa Payload/
+          zip -r -9 MonitorGpuTool.ipa Payload/
           rm -rf Payload
           echo "IPA packaging completed successfully."
 
     artifacts:
-      - app/RunMon.ipa
+      - app/MonitorGpuTool.ipa

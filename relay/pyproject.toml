@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "runmon-relay"
 version = "1.0.2"
-description = "Self-hosted E2EE relay for RunMon: stores and forwards ciphertext between agents and phone apps."
+description = "Self-hosted E2EE relay for MonitorGpuTool: stores and forwards ciphertext between agents and phone apps."
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
