@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:runmon_app/main.dart';
-import 'package:runmon_app/state.dart';
-import 'package:runmon_app/ui.dart';
+import 'package:monitorgputool_app/main.dart';
+import 'package:monitorgputool_app/state.dart';
+import 'package:monitorgputool_app/ui.dart';
 
 void main() {
   setUp(() {
@@ -34,7 +34,7 @@ void main() {
   tearDown(() => appState.agents.clear());
 
   testWidgets('GPU 显存以 GB 显示', (tester) async {
-    await tester.pumpWidget(const RunMonApp());
+    await tester.pumpWidget(const MonitorGpuToolApp());
 
     expect(find.text('92%'), findsOneWidget);
     expect(find.text('3%'), findsOneWidget);
@@ -43,7 +43,7 @@ void main() {
   });
 
   testWidgets('GPU 百分号、分隔点和显存数值分别对齐', (tester) async {
-    await tester.pumpWidget(const RunMonApp());
+    await tester.pumpWidget(const MonitorGpuToolApp());
 
     final percent0 = tester.getRect(find.text('92%'));
     final percent1 = tester.getRect(find.text('3%'));
@@ -67,7 +67,7 @@ void main() {
   });
 
   testWidgets('不同数值长度不会改变 GPU 进度条宽度', (tester) async {
-    await tester.pumpWidget(const RunMonApp());
+    await tester.pumpWidget(const MonitorGpuToolApp());
 
     final bars = tester
         .widgetList<RmProgress>(find.byType(RmProgress))
@@ -88,9 +88,10 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
-      await tester.pumpWidget(const RunMonApp());
+      await tester.pumpWidget(const MonitorGpuToolApp());
 
       expect(tester.takeException(), isNull);
     });
   }
 }
+

@@ -1,5 +1,5 @@
-import 'package:flutter_test/flutter_test.dart';
-import 'package:runmon_app/llm_provider.dart';
+﻿import 'package:flutter_test/flutter_test.dart';
+import 'package:monitorgputool_app/llm_provider.dart';
 
 void main() {
   test('供应商预设包含常用国内外和本地接口', () {
@@ -27,3 +27,4 @@ void main() {
     }
   });
 }
+

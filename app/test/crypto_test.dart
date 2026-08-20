@@ -1,9 +1,9 @@
-import 'package:flutter_test/flutter_test.dart';
-import 'package:runmon_app/state.dart';
+﻿import 'package:flutter_test/flutter_test.dart';
+import 'package:monitorgputool_app/state.dart';
 
 void main() {
   test('解密 Python agent 生成的密文(跨语言兼容向量)', () async {
-    // 由 agent 侧 runmon.crypto.encrypt 生成的真实向量
+    // 由 agent 侧 MonitorGpuTool.crypto.encrypt 生成的真实向量
     const keyB64 = '5x6r-S1sXtaF5fP3SPjPAmLcWJoFpuAO6sQHVx2ic8Y=';
     final env = {
       'n': 'nJ/OAM9999Zznyw/',
@@ -11,7 +11,7 @@ void main() {
           'eaVUfjBMAQMXcLk/QtlQxTnfW6UmLVMa/h/JtqwTRA==',
     };
     final data = await decryptEnv(env, keyFromB64(keyB64));
-    expect(data['msg'], '你好 RunMon');
+    expect(data['msg'], '你好 MonitorGpuTool');
     expect(data['value'], 42.5);
     expect(data['nested'], {'ok': true});
   });
@@ -27,3 +27,4 @@ void main() {
     expect(keyFromB64('5x6r-S1sXtaF5fP3SPjPAmLcWJoFpuAO6sQHVx2ic8Y=').length, 32);
   });
 }
+

@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:runmon_app/pages/llm_settings_sheet.dart';
-import 'package:runmon_app/ui.dart';
+import 'package:monitorgputool_app/pages/llm_settings_sheet.dart';
+import 'package:monitorgputool_app/ui.dart';
 
 void main() {
   testWidgets('服务器 LLM 配置可以获取、测试并保存', (tester) async {
@@ -95,3 +95,4 @@ void main() {
     });
   }
 }
+

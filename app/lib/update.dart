@@ -26,7 +26,7 @@ Future<UpdateInfo?> checkUpdate() async {
   final pkg = await PackageInfo.fromPlatform();
   final localCode = int.tryParse(pkg.buildNumber) ?? 0;
   final resp = await http
-      .get(Uri.parse(_versionUrl), headers: {'User-Agent': 'runmon-app'})
+      .get(Uri.parse(_versionUrl), headers: {'User-Agent': 'monitorgputool-app'})
       .timeout(const Duration(seconds: 10));
   if (resp.statusCode != 200) throw Exception('HTTP ${resp.statusCode}');
   final j = jsonDecode(utf8.decode(resp.bodyBytes)) as Map<String, dynamic>;

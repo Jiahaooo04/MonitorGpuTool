@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:runmon_app/pages/runs_page.dart';
-import 'package:runmon_app/state.dart';
-import 'package:runmon_app/ui.dart';
+import 'package:monitorgputool_app/pages/runs_page.dart';
+import 'package:monitorgputool_app/state.dart';
+import 'package:monitorgputool_app/ui.dart';
 
 Map<String, dynamic> _gpu(
   int index, {
@@ -127,3 +127,4 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 }
+

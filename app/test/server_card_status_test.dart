@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:runmon_app/main.dart';
-import 'package:runmon_app/state.dart';
+import 'package:monitorgputool_app/main.dart';
+import 'package:monitorgputool_app/state.dart';
 
 Map<String, dynamic> _gpu(
   int index, {
@@ -77,7 +77,7 @@ void main() {
   tearDown(() => appState.agents.clear());
 
   testWidgets('主页拆分在线、监控任务和 GPU 占用状态', (tester) async {
-    await tester.pumpWidget(const RunMonApp());
+    await tester.pumpWidget(const MonitorGpuToolApp());
 
     expect(
       find.text('在线 · 无任务 · GPU 使用 · 3 进程', findRichText: true),
@@ -95,7 +95,7 @@ void main() {
   });
 
   testWidgets('两张服务器卡的状态列和内容区域严格对齐', (tester) async {
-    await tester.pumpWidget(const RunMonApp());
+    await tester.pumpWidget(const MonitorGpuToolApp());
 
     final onlineBusy = tester.getRect(
       find.byKey(const ValueKey('server-connection-busy')),
@@ -130,7 +130,7 @@ void main() {
   });
 
   testWidgets('底部只保留靠左的 CPU 与内存摘要', (tester) async {
-    await tester.pumpWidget(const RunMonApp());
+    await tester.pumpWidget(const MonitorGpuToolApp());
 
     expect(find.text('CPU 35.6% · 内存 81.9%'), findsNWidgets(2));
     expect(find.textContaining('GPU 92%/3%'), findsNothing);
@@ -143,7 +143,7 @@ void main() {
       {'id': 'run-2', 'status': 'running'},
     ];
 
-    await tester.pumpWidget(const RunMonApp());
+    await tester.pumpWidget(const MonitorGpuToolApp());
 
     expect(
       find.text('在线 · 2 任务 · GPU 使用 · 3 进程', findRichText: true),
@@ -176,7 +176,7 @@ void main() {
       {'pid': 101, 'user': 'alice'},
     ];
 
-    await tester.pumpWidget(const RunMonApp());
+    await tester.pumpWidget(const MonitorGpuToolApp());
 
     expect(
       find.text('在线 · 无任务 · GPU 使用 · 2 进程', findRichText: true),
@@ -191,9 +191,10 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
-      await tester.pumpWidget(const RunMonApp());
+      await tester.pumpWidget(const MonitorGpuToolApp());
 
       expect(tester.takeException(), isNull);
     });
   }
 }
+
