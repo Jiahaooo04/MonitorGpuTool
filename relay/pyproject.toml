@@ -22,6 +22,10 @@ Issues = "https://github.com/murphy977/runmon/issues"
 [project.optional-dependencies]
 dev = ["pytest>=8", "httpx>=0.27"]
 
+[project.scripts]
+runmon-relay = "runmon_relay.__main__:main"
+monitorgputool-relay = "runmon_relay.__main__:main"
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/runmon_relay"]
 

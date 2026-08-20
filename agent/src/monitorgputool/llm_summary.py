@@ -173,7 +173,7 @@ class LLMSummarizer:
             return {"ok": False, "error": "请先填写接口地址和模型"}
         try:
             summary = self._request_summary(
-                run_name="RunMon 接口测试",
+                run_name="MonitorGpuTool 接口测试",
                 command="python train.py",
                 exit_code=1,
                 log_tail=(

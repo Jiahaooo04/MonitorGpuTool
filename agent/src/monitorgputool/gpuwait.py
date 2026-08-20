@@ -265,7 +265,7 @@ class GpuWatchManager:
         import sys
         import time
         from pathlib import Path
-        from .store import data_dir
+        from .config import data_dir
 
         env = dict(os.environ)
         env["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # Ensure CUDA device index aligns with nvidia-smi

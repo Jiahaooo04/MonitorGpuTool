@@ -9,8 +9,8 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 APP_DIR="$ROOT/app"
 APK_DIR="$APP_DIR/build/app/outputs/flutter-apk"
-NOTES_FILE="${RUNMON_RELEASE_NOTES_FILE:-$APP_DIR/release-notes.txt}"
-VERSION_JSON="${RUNMON_VERSION_JSON:-$ROOT/site/version.json}"
+NOTES_FILE="${MONITORGPUTOOL_RELEASE_NOTES_FILE:-${RUNMON_RELEASE_NOTES_FILE:-$APP_DIR/release-notes.txt}}"
+VERSION_JSON="${MONITORGPUTOOL_VERSION_JSON:-${RUNMON_VERSION_JSON:-$ROOT/site/version.json}}"
 PYTHON="${PYTHON:-python3}"
 MODE=build
 

@@ -205,7 +205,7 @@ def cmd_init(args) -> int:
     if not args.no_test and cfg.channels:
         store = RunStore()
         notifier = Notifier(store, make_channels(cfg))
-        notifier.notify(Event(type="test", level="info", title="👋 RunMon 测试通知",
+        notifier.notify(Event(type="test", level="info", title="👋 MonitorGpuTool 测试通知",
                               body="通道配置成功,任务事件将从这里推送"))
         if notifier.flush(timeout=15):
             print("✅ 测试通知已全部送达")
