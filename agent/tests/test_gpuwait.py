@@ -141,7 +141,7 @@ def test_watch_missing_card_not_ok(tmp_path, monkeypatch):
     assert st is not None and not st["ok"] and "fired" not in st
 
 
-def test_watch_launch_script_contains_terminal_runner(tmp_path, monkeypatch):
+def test_watch_launch_script_executes_command(tmp_path, monkeypatch):
     monkeypatch.setenv("MONITORGPUTOOL_DATA_DIR", str(tmp_path))
     from monitorgputool import gpuwait
     mgr = gpuwait.GpuWatchManager(RunStore(tmp_path / "t.db"), Config())
@@ -156,36 +156,12 @@ def test_watch_launch_script_contains_terminal_runner(tmp_path, monkeypatch):
     import subprocess
     monkeypatch.setattr(subprocess, "Popen", fake_popen)
 
-    assert mgr._launch("python train.py --epochs 10", "训练任务", "0")
+    cmd = "python train.py --epochs 10"
+    assert mgr._launch(cmd, "训练任务", "0")
     assert len(recorded_scripts) == 1
     script = recorded_scripts[0]
-    assert "_runmon_prompt()" in script
-    assert "_runmon_step()" in script
-    assert "_runmon_step 'python train.py --epochs 10'" in script
-
-
-def test_watch_launch_script_multi_step_sequential(tmp_path, monkeypatch):
-    monkeypatch.setenv("MONITORGPUTOOL_DATA_DIR", str(tmp_path))
-    from monitorgputool import gpuwait
-    mgr = gpuwait.GpuWatchManager(RunStore(tmp_path / "t.db"), Config())
-
-    recorded_scripts = []
-
-    def fake_popen(argv, **kw):
-        script_path = argv[-1]
-        recorded_scripts.append(Path(script_path).read_text(encoding="utf-8"))
-        return None
-
-    import subprocess
-    monkeypatch.setattr(subprocess, "Popen", fake_popen)
-
-    cmd = "cd /data/project\nconda activate train_env\npython train.py"
-    assert mgr._launch(cmd, "分步任务", "0")
-    assert len(recorded_scripts) == 1
-    script = recorded_scripts[0]
-    assert "_runmon_step 'cd /data/project'" in script
-    assert "_runmon_step 'conda activate train_env'" in script
-    assert "_runmon_step 'python train.py'" in script
+    assert "python train.py --epochs 10" in script
+    assert script.startswith("#!/usr/bin/env bash")
 
 
 

@@ -1,4 +1,4 @@
-﻿"""全链路 E2E:mon daemon ←WSS→ relay ←WSS→ app 客户端,验证加密同步与指令回路。"""
+"""全链路 E2E:mon daemon ←WSS→ relay ←WSS→ app 客户端,验证加密同步与指令回路。"""
 import asyncio
 import contextlib
 import json

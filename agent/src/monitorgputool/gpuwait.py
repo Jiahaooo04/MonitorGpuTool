@@ -272,125 +272,11 @@ class GpuWatchManager:
         if idx:
             env["CUDA_VISIBLE_DEVICES"] = idx
 
-        # Generate isolated runner script to reproduce full interactive terminal environment
         script_dir = data_dir() / "scripts"
         script_dir.mkdir(parents=True, exist_ok=True)
         script_file = script_dir / f"launch_{int(time.time())}_{os.getpid()}.sh"
 
-        # Wrap command into step-by-step terminal execution if not already wrapped
-        if "_runmon_step" in command:
-            exec_body = command
-        else:
-            lines = []
-            for line in command.splitlines():
-                trimmed = line.strip()
-                if not trimmed:
-                    continue
-                if trimmed.startswith("#"):
-                    lines.append(line)
-                else:
-                    escaped = line.replace("'", "'\\''")
-                    lines.append(f"_runmon_step '{escaped}'")
-            exec_body = "\n".join(lines) if lines else command
-
-        script_content = f"""#!/usr/bin/env bash
-# 1. Search and source conda from common paths if conda command is not yet available
-if ! type conda >/dev/null 2>&1; then
-    for _d in "$CONDA_EXE" "$MAMBA_EXE" \
-              "$HOME/miniconda3" "$HOME/anaconda3" "$HOME/miniconda" "$HOME/anaconda" \
-              "$HOME/miniforge3" "$HOME/mambaforge" "$HOME/.conda" \
-              "/opt/conda" "/opt/miniconda3" "/opt/anaconda3" \
-              "/usr/local/miniconda3" "/usr/local/anaconda3" \
-              "/data/miniconda3" "/data/anaconda3" \
-              /data/home/*/miniconda* /data/home/*/anaconda* \
-              /home/*/miniconda* /home/*/anaconda* /home/*/miniforge* /home/*/mambaforge*; do
-        if [ -n "$_d" ]; then
-            if [ -f "$_d/etc/profile.d/conda.sh" ]; then
-                . "$_d/etc/profile.d/conda.sh" 2>/dev/null
-                break
-            elif [ -f "$_d/bin/conda" ]; then
-                export PATH="$_d/bin:$PATH"
-                eval "$("$_d/bin/conda" shell.bash hook 2>/dev/null)" || true
-                break
-            fi
-        fi
-    done
-fi
-
-# 2. Extract and source conda initialize block from shell rc files if still needed
-if ! type conda >/dev/null 2>&1; then
-    for rc in "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.profile"; do
-        if [ -f "$rc" ]; then
-            eval "$(sed -n '/# >>> conda initialize >>>/,/# <<< conda initialize <<</p' "$rc" 2>/dev/null)"
-            if type conda >/dev/null 2>&1; then
-                break
-            fi
-        fi
-    done
-fi
-
-# 3. Inject Conda Shell Hook
-if type conda >/dev/null 2>&1; then
-    eval "$(conda shell.bash hook 2>/dev/null)" || true
-fi
-
-# 4. Load system and user environment profiles
-[ -f /etc/profile ] && . /etc/profile 2>/dev/null
-[ -f ~/.profile ] && . ~/.profile 2>/dev/null
-[ -f "$HOME/.bash_profile" ] && . "$HOME/.bash_profile" 2>/dev/null
-if [ -f "$HOME/.bashrc" ]; then
-    eval "$(sed -e 's/\\[ -z "\\$PS1" \\] && return//g' -e 's/case \\$- in \\*i\\*\\) ;; \\*\\) return;; esac//g' "$HOME/.bashrc" 2>/dev/null)" 2>/dev/null || true
-fi
-
-# 5. Interactive terminal prompt generator and step-by-step runner
-_runmon_prompt() {{
-    local _env=""
-    if [ -n "$CONDA_DEFAULT_ENV" ]; then
-        _env="($CONDA_DEFAULT_ENV) "
-    elif [ -n "$VIRTUAL_ENV" ]; then
-        _env="($(basename "$VIRTUAL_ENV")) "
-    fi
-    local _u="${{USER:-$(id -un 2>/dev/null || whoami 2>/dev/null || echo user)}}"
-    local _h="$(hostname -s 2>/dev/null || hostname 2>/dev/null || echo localhost)"
-    local _cwd="$PWD"
-    local _disp_cwd="$_cwd"
-    if [ -n "$HOME" ]; then
-        if [ "$_cwd" = "$HOME" ]; then
-            _disp_cwd="~"
-        elif [[ "$_cwd" == "$HOME/"* ]]; then
-            _disp_cwd="~${{_cwd#$HOME}}"
-        fi
-    fi
-    local _sym="$"
-    if [ "${{EUID:-$(id -u 2>/dev/null)}}" = "0" ]; then
-        _sym="#"
-    fi
-    printf "\\033[00m%s\\033[01;32m%s@%s\\033[00m:\\033[01;34m%s\\033[00m%s " "$_env" "$_u" "$_h" "$_disp_cwd" "$_sym"
-}}
-
-_runmon_step() {{
-    local _cmd="$1"
-    [ -z "$_cmd" ] && return 0
-    _runmon_prompt
-    printf "%s\\n" "$_cmd"
-    eval "$_cmd"
-    local _ret=$?
-    if [ $_ret -ne 0 ]; then
-        printf "\\033[01;31m[RunMon] 步骤执行失败 (退出码: %d)\\033[00m\\n" "$_ret"
-        _runmon_prompt
-        printf "\\n"
-        exit $_ret
-    fi
-    return 0
-}}
-
-# 6. Sequentially execute user commands step-by-step
-{exec_body}
-
-# 7. Print concluding terminal prompt
-_runmon_prompt
-printf "\\n"
-"""
+        script_content = f"#!/usr/bin/env bash\n{command}\n" if not command.startswith("#!") else command
         script_file.write_text(script_content, encoding="utf-8")
         script_file.chmod(0o755)
 
@@ -403,3 +289,4 @@ printf "\\n"
             return True
         except Exception:
             return False
+

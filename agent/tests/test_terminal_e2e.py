@@ -1,4 +1,4 @@
-﻿"""交互终端全链路:App 端发 term_open + term_input,收到 pty 输出。"""
+"""交互终端全链路:App 端发 term_open + term_input,收到 pty 输出。"""
 import asyncio
 import json
 import socket
