@@ -12,6 +12,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 import psutil
+import websockets
 
 from . import __version__, sampler
 from .config import Config
@@ -322,7 +323,6 @@ class Daemon:
         return f"wss://{u}/ws/agent"
 
     async def run_forever(self) -> None:
-        import websockets
         backoff = 1.0
         while True:
             try:
