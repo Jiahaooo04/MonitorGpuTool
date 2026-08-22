@@ -4,11 +4,11 @@
 
 </div>
 
-# MonitorGpuTool · GPU与长任务监控陪伴器
+# RunMon · 长任务陪伴器
 
 **手机实时监控服务器上的训练、爬虫、长脚本。** 还在跑吗?GPU 在干活吗?跑完了没?——挂了第一时间知道。端到端加密,自托管,零侵入。
 
-> 跑了几个小时的训练中途报错,GPU 空闲半天没人知道;吃饭睡觉还惦记着 ssh 上去看一眼——MonitorGpuTool 就是为了消灭这件事。
+> 跑了几个小时的训练中途报错,GPU 空闲半天没人知道;吃饭睡觉还惦记着 ssh 上去看一眼——RunMon 就是为了消灭这件事。
 
 `v1.0.7` · Python + Flutter · MIT · 端到端加密
 
@@ -30,11 +30,11 @@
 
 ### 在手机上看任务实时画面
 
-**1. 手机装 App** —— 到 [Releases](../../releases) 下载 `MonitorGpuTool-arm64.apk`(现代安卓都是 arm64)。
+**1. 手机装 App** —— 到 [Releases](../../releases) 下载 `RunMon-arm64.apk`(现代安卓都是 arm64)。
 
 **2. 服务器上:装 agent、配对、保持连接**
 ```bash
-pip install monitorgputool
+pip install runmon
 mon pair       # 打印二维码 —— 用 App 扫(默认用公共体验中转)
 mon daemon     # 保持开着;手机只有在它开着时才能看到实时数据
 ```
@@ -48,12 +48,12 @@ mon run -- python train.py   # 你原本的命令,前面包一层
 
 > **小贴士:** `mon daemon` 默认前台运行;加 `-d`(`mon daemon -d`)让它退到后台,或放 `tmux` / `nohup` 里跑,断开 SSH 也不停。
 >
-> **conda 用户:** `mon` 是系统级工具,不用装进每个虚拟环境 —— 用 `pipx install monitorgputool` 装一次全局可用,切换环境不用重装。
+> **conda 用户:** `mon` 是系统级工具,不用装进每个虚拟环境 —— 用 `pipx install runmon` 装一次全局可用,切换环境不用重装。
 
 ### 只想要通知?(不用装 App)
 
 ```bash
-pip install monitorgputool
+pip install runmon
 mon init --wecom-key <webhook>   # 或 --bark-key / --ntfy-topic / --telegram
 mon run -- python train.py       # 完成 / 失败 / 假死 / … 时手机响
 ```
@@ -73,12 +73,12 @@ mon wait --gpus 2 -- python train.py       # 等到 2 张整卡空闲,自动开�
 
 ```
  GPU 服务器(可多台)              relay(自托管)              手机
-┌────────────────────┐          ┌─────────────┐          ┌──────────────┐
-│ monitorgputool     │─出站WSS─→ │   FastAPI   │ ←─WSS出站─│  Flutter App │
-│ mon run/attach     │          │  只存密文    │          │ 面板/曲线/终端 │
-│ GPU/事件引擎        │          └──────┬──────┘          └──────────────┘
-│ 通知直发 ────────────┼──出站─→ ntfy / Bark / Telegram ──→ 手机必达通知
-└────────────────────┘
+┌────────────────┐          ┌─────────────┐          ┌──────────────┐
+│ runmon agent    │─出站WSS─→ │   FastAPI   │ ←─WSS出站─│  Flutter App │
+│ mon run/attach  │          │  只存密文    │          │ 面板/曲线/终端 │
+│ GPU/事件引擎     │          └──────┬──────┘          └──────────────┘
+│ 通知直发 ────────┼──出站─→ ntfy / Bark / Telegram ──→ 手机必达通知
+└────────────────┘
 ```
 
 - **全出站** —— 服务器和手机都不需要公网 IP,不要求同一局域网,relay 是唯一有公网地址的一方
@@ -100,7 +100,7 @@ python -m runmon_relay --host 127.0.0.1 --port 8080
 
 | 目录 | 内容 |
 |---|---|
-| `agent/` | Python 包 `monitorgputool`,CLI `mon` / `monitorgputool` |
+| `agent/` | Python 包 `runmon`,CLI `mon` |
 | `relay/` | Python 包 `runmon-relay`,FastAPI 中转 |
 | `app/` | Flutter 手机 App(安卓,可复用出 iOS) |
 

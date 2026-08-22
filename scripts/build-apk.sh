@@ -9,8 +9,8 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 APP_DIR="$ROOT/app"
 APK_DIR="$APP_DIR/build/app/outputs/flutter-apk"
-NOTES_FILE="${MONITORGPUTOOL_RELEASE_NOTES_FILE:-${RUNMON_RELEASE_NOTES_FILE:-$APP_DIR/release-notes.txt}}"
-VERSION_JSON="${MONITORGPUTOOL_VERSION_JSON:-${RUNMON_VERSION_JSON:-$ROOT/site/version.json}}"
+NOTES_FILE="${RUNMON_RELEASE_NOTES_FILE:-$APP_DIR/release-notes.txt}"
+VERSION_JSON="${RUNMON_VERSION_JSON:-$ROOT/site/version.json}"
 PYTHON="${PYTHON:-python3}"
 MODE=build
 
@@ -54,27 +54,27 @@ if [[ "$MODE" == build ]]; then
 
   echo "==> 重命名…"
   cp "$APK_DIR/app-arm64-v8a-release.apk" \
-    "$APK_DIR/MonitorGpuTool-arm64.apk"   # 现代手机,装这个
+    "$APK_DIR/RunMon-arm64.apk"   # 现代手机,装这个
   cp "$APK_DIR/app-armeabi-v7a-release.apk" \
-    "$APK_DIR/MonitorGpuTool-arm32.apk"   # 老 32 位手机
+    "$APK_DIR/RunMon-arm32.apk"   # 老 32 位手机
   cp "$APK_DIR/app-x86_64-release.apk" \
-    "$APK_DIR/MonitorGpuTool-x86.apk"     # 电脑模拟器
+    "$APK_DIR/RunMon-x86.apk"     # 电脑模拟器
   cp "$APK_DIR/app-release.apk" \
-    "$APK_DIR/MonitorGpuTool.apk"         # 通用版(装任何机器)
+    "$APK_DIR/RunMon.apk"         # 通用版(装任何机器)
 fi
 
 APKS=(
-  "$APK_DIR/MonitorGpuTool.apk"
-  "$APK_DIR/MonitorGpuTool-arm64.apk"
-  "$APK_DIR/MonitorGpuTool-arm32.apk"
-  "$APK_DIR/MonitorGpuTool-x86.apk"
+  "$APK_DIR/RunMon.apk"
+  "$APK_DIR/RunMon-arm64.apk"
+  "$APK_DIR/RunMon-arm32.apk"
+  "$APK_DIR/RunMon-x86.apk"
 )
 METADATA_ARGS=(
   --pubspec "$APP_DIR/pubspec.yaml"
   --notes-file "$NOTES_FILE"
   --output "$VERSION_JSON"
-  --base-apk "$APK_DIR/MonitorGpuTool.apk"
-  --update-apk "$APK_DIR/MonitorGpuTool-arm64.apk"
+  --base-apk "$APK_DIR/RunMon.apk"
+  --update-apk "$APK_DIR/RunMon-arm64.apk"
 )
 if [[ "$MODE" == check ]]; then
   METADATA_ARGS+=(--check)
@@ -92,5 +92,5 @@ if [[ "$MODE" == build ]]; then
   echo "==> 完成,可以发出去的 APK:"
   ls -lh "${APKS[@]}" | awk '{print "   " $5 "  " $9}'
   echo ""
-  echo "日常手机装:MonitorGpuTool-arm64.apk(现代安卓都是 arm64)"
+  echo "日常手机装:RunMon-arm64.apk(现代安卓都是 arm64)"
 fi

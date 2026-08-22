@@ -4,11 +4,11 @@
 
 </div>
 
-# MonitorGpuTool App
+# RunMon App
 
-The MonitorGpuTool mobile app (Flutter, Android-first) — a live dashboard, resource charts, and a full interactive terminal for the jobs running on your servers. It pairs with a server agent by scanning a QR code, and all data is end-to-end encrypted.
+The RunMon mobile app (Flutter, Android-first) — a live dashboard, resource charts, and a full interactive terminal for the jobs running on your servers. It pairs with a server agent by scanning a QR code, and all data is end-to-end encrypted.
 
-For what MonitorGpuTool is and how to get started, see the [project README](../README.md).
+For what RunMon is and how to get started, see the [project README](../README.md).
 
 ## Build
 
@@ -19,4 +19,4 @@ flutter build apk --release --split-per-abi   # per-ABI APKs
 ../scripts/build-apk.sh
 ```
 
-Pre-built APKs are attached to each [GitHub Release](../../releases) — most phones want `MonitorGpuTool-arm64.apk`.
+Pre-built APKs are attached to each [GitHub Release](../../releases) — most phones want `RunMon-arm64.apk`.

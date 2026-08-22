@@ -4,11 +4,11 @@
 
 </div>
 
-# MonitorGpuTool App
+# RunMon App
 
-MonitorGpuTool 手机 App(Flutter,安卓优先)—— 服务器上任务的实时面板、资源曲线,还有一个完整的交互终端。扫码与服务器 agent 配对,全程数据端到端加密。
+RunMon 手机 App(Flutter,安卓优先)—— 服务器上任务的实时面板、资源曲线,还有一个完整的交互终端。扫码与服务器 agent 配对,全程数据端到端加密。
 
-MonitorGpuTool 是什么、怎么上手,见[仓库根 README](../README.zh-CN.md)。
+RunMon 是什么、怎么上手,见[仓库根 README](../README.zh-CN.md)。
 
 ## 构建
 
@@ -19,4 +19,4 @@ flutter build apk --release --split-per-abi   # 按架构分包
 ../scripts/build-apk.sh
 ```
 
-预编译好的 APK 挂在每个 [GitHub Release](../../releases) 里 —— 多数手机装 `MonitorGpuTool-arm64.apk`。
+预编译好的 APK 挂在每个 [GitHub Release](../../releases) 里 —— 多数手机装 `RunMon-arm64.apk`。

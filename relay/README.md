@@ -118,12 +118,12 @@ If your domain sits behind Cloudflare or another CDN (orange-cloud proxy), it ma
 - Device tokens are stored only as hashes; pairing codes are single-use and time-limited.
 - The relay should only listen on `127.0.0.1` (as above), with nginx as the single public entry point — don't expose `--host 0.0.0.0` directly to the internet.
 
-## This package is not the main entry point
+## This package isn't the day-to-day entry point
 
-The everyday tool you install on GPU servers is the agent package:
+What you use day to day on the GPU server is the agent package:
 
 ```bash
-pip install monitorgputool
+pip install runmon
 ```
 
 For the full introduction, the mobile app download, and the quick start, see the **[project homepage](https://runmon.linxiexie.com)** and the **[GitHub repo](https://github.com/murphy977/runmon)**.

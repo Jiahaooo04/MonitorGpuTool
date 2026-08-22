@@ -26,7 +26,7 @@ Future<UpdateInfo?> checkUpdate() async {
   final pkg = await PackageInfo.fromPlatform();
   final localCode = int.tryParse(pkg.buildNumber) ?? 0;
   final resp = await http
-      .get(Uri.parse(_versionUrl), headers: {'User-Agent': 'monitorgputool-app'})
+      .get(Uri.parse(_versionUrl), headers: {'User-Agent': 'runmon-app'})
       .timeout(const Duration(seconds: 10));
   if (resp.statusCode != 200) throw Exception('HTTP ${resp.statusCode}');
   final j = jsonDecode(utf8.decode(resp.bodyBytes)) as Map<String, dynamic>;
@@ -95,7 +95,7 @@ class _UpdateDialogState extends State<_UpdateDialog> {
     try {
       final dir = await getExternalStorageDirectory() ??
           await getTemporaryDirectory();
-      final file = File('${dir.path}/MonitorGpuTool-${widget.info.version}.apk');
+      final file = File('${dir.path}/RunMon-${widget.info.version}.apk');
       final resp =
           await http.Client().send(http.Request('GET', Uri.parse(widget.info.url)));
       final total = resp.contentLength ?? 0;

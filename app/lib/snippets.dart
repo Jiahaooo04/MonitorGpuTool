@@ -58,7 +58,6 @@ class CommandSnippet {
     if (cmd.isNotEmpty) {
       if (withMonRun &&
           !cmd.startsWith('mon run') &&
-          !cmd.startsWith('monitorgputool run') &&
           !cmd.startsWith('runmon run') &&
           !cmd.startsWith('mon wait')) {
         final taskName = name.trim().replaceAll('"', '');
