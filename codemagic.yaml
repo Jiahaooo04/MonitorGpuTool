@@ -1,4 +1,29 @@
 workflows:
+  android-build:
+    name: Build RunMon Android APK
+    max_build_duration: 30
+    instance_type: linux_x2
+    environment:
+      flutter: stable
+      java: 17
+    scripts:
+      - name: Get Flutter Dependencies
+        working_directory: app
+        script: |
+          flutter pub get
+      - name: Build Android APK
+        working_directory: app
+        script: |
+          flutter build apk --release --split-per-abi
+          flutter build apk --release
+          
+          APK_DIR="build/app/outputs/flutter-apk"
+          cp "$APK_DIR/app-arm64-v8a-release.apk" "$APK_DIR/RunMon-arm64.apk" 2>/dev/null || true
+          cp "$APK_DIR/app-armeabi-v7a-release.apk" "$APK_DIR/RunMon-arm32.apk" 2>/dev/null || true
+          cp "$APK_DIR/app-release.apk" "$APK_DIR/RunMon.apk" 2>/dev/null || true
+    artifacts:
+      - app/build/app/outputs/flutter-apk/*.apk
+
   ios-build:
     name: Build RunMon iOS IPA
     max_build_duration: 30

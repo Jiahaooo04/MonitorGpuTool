@@ -71,8 +71,9 @@ class _GpuWatchSheetState extends State<_GpuWatchSheet> {
     if (watch != null) {
       _hold = ((watch['hold_minutes'] as num?) ?? 5).toDouble();
       final cmd = watch['command'] as String? ?? '';
+      final name = watch['name'] as String? ?? '';
       // 尝试匹配已有的 snippet
-      final match = snippetStore.snippets.where((s) => s.toExecutableCommand() == cmd).firstOrNull;
+      final match = snippetStore.snippets.where((s) => s.toExecutableCommand() == cmd || (name.isNotEmpty && s.name == name)).firstOrNull;
       if (match != null) {
         _selectedSnippetId = match.id;
       }
