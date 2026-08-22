@@ -1,4 +1,4 @@
-from monitorgputool.cli import main
+from runmon.cli import main
 
 if __name__ == "__main__":
     raise SystemExit(main())

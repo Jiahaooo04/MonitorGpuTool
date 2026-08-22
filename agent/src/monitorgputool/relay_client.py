@@ -12,7 +12,6 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 import psutil
-import websockets
 
 from . import __version__, sampler
 from .config import Config
@@ -119,7 +118,7 @@ def _rerun(run) -> dict:
             env = json.loads(env_path.read_text(encoding="utf-8"))
     except Exception:
         pass
-    cmd = [sys.executable, "-m", "monitorgputool", "run",
+    cmd = [sys.executable, "-m", "runmon", "run",
            "--name", f"{run.name}-rerun", "--"] + shlex.split(run.command)
     subprocess.Popen(cmd, cwd=run.cwd or None, env=env, start_new_session=True,
                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
@@ -308,29 +307,25 @@ class Daemon:
             st = self._watch_mgr.poll(hb["gpus"])
             if st is not None:
                 hb["gpu_watch"] = st
-        except Exception as exc:
-            hb["gpu_watch"] = {"error": str(exc)}
+        except Exception:
+            pass  # 蹲卡故障不影响心跳
         return hb
 
     def ws_url(self) -> str:
-        u = self.url.rstrip("/")
-        if u.startswith("https://"):
-            return "wss://" + u[8:] + "/ws/agent"
-        if u.startswith("http://"):
-            return "ws://" + u[7:] + "/ws/agent"
-        if u.startswith("wss://") or u.startswith("ws://"):
-            return u + "/ws/agent"
-        return f"wss://{u}/ws/agent"
+        u = self.url.replace("https://", "wss://").replace("http://", "ws://")
+        return u + "/ws/agent"
 
     async def run_forever(self) -> None:
+        import websockets
         backoff = 1.0
         while True:
             try:
+                # proxy=None:绕过系统代理直连 relay——代理常会剥掉 WebSocket 升级头导致 404
                 async with websockets.connect(
-                    self.ws_url(), proxy=None,
-                    additional_headers={"Authorization": f"Bearer {self.token}",
-                                         "X-Device": self.device_id,
-                                         "User-Agent": f"monitorgputool/{__version__}"}) as ws:
+                        self.ws_url(), proxy=None,
+                        additional_headers={"Authorization": f"Bearer {self.token}",
+                                            "X-Device": self.device_id,
+                                            "User-Agent": f"runmon/{__version__}"}) as ws:
                     backoff = 1.0
                     self._ws = ws
                     print(f"[mon daemon] 已连接 {self.url}")
@@ -365,7 +360,7 @@ class Daemon:
         if t == "term_open":
             if not self.config.enable_terminal:
                 await ws.send(json.dumps({"t": "term_output",
-                    "enc": encrypt({"data": "\r\n[MonitorGpuTool] 交互终端未启用。"
+                    "enc": encrypt({"data": "\r\n[RunMon] 交互终端未启用。"
                         "在服务器 config.toml 设 enable_terminal = true 并重启 mon daemon。\r\n"},
                         self.key)}))
                 return

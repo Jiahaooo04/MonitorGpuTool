@@ -159,9 +159,9 @@ def test_watch_launch_script_contains_terminal_runner(tmp_path, monkeypatch):
     assert mgr._launch("python train.py --epochs 10", "训练任务", "0")
     assert len(recorded_scripts) == 1
     script = recorded_scripts[0]
-    assert "_monitorgputool_prompt()" in script
-    assert "_monitorgputool_step()" in script
-    assert "_monitorgputool_step 'python train.py --epochs 10'" in script
+    assert "_runmon_prompt()" in script
+    assert "_runmon_step()" in script
+    assert "_runmon_step 'python train.py --epochs 10'" in script
 
 
 def test_watch_launch_script_multi_step_sequential(tmp_path, monkeypatch):
@@ -183,10 +183,9 @@ def test_watch_launch_script_multi_step_sequential(tmp_path, monkeypatch):
     assert mgr._launch(cmd, "分步任务", "0")
     assert len(recorded_scripts) == 1
     script = recorded_scripts[0]
-    assert "_monitorgputool_step 'cd /data/project'" in script
-    assert "_monitorgputool_step 'conda activate train_env'" in script
-    assert "_monitorgputool_step 'python train.py'" in script
-
+    assert "_runmon_step 'cd /data/project'" in script
+    assert "_runmon_step 'conda activate train_env'" in script
+    assert "_runmon_step 'python train.py'" in script
 
 
 

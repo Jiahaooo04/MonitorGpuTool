@@ -235,7 +235,7 @@ class RunWrapper:
     def _queue_error_event(self, ev: Event, log_tail: str) -> None:
         if self._alert_pool is None:
             self._alert_pool = ThreadPoolExecutor(
-                max_workers=1, thread_name_prefix="monitorgputool-alert"
+                max_workers=1, thread_name_prefix="runmon-alert"
             )
         if self.summarizer.enabled:
             self._llm_attempted = True

@@ -1,4 +1,4 @@
-"""演示脚本:模拟训练输出,用于测试与演示 MonitorGpuTool。"""
+"""演示脚本:模拟训练输出,用于测试与演示 RunMon。"""
 from __future__ import annotations
 
 import argparse
@@ -12,7 +12,7 @@ def mmss(seconds: float) -> str:
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="MonitorGpuTool 演示训练脚本")
+    ap = argparse.ArgumentParser(description="RunMon 演示训练脚本")
     ap.add_argument("--epochs", type=int, default=2)
     ap.add_argument("--steps", type=int, default=20)
     ap.add_argument("--delay", type=float, default=0.1)

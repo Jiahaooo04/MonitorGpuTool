@@ -4,21 +4,21 @@
 
 </div>
 
-# MonitorGpuTool (monitorgputool)
+# runmon
 
 **长任务陪伴器** —— 服务器上跑训练/爬虫/长脚本时,手机第一时间知道"跑完了、挂了、还是假死了"。零侵入,不改一行训练代码。
 
-`monitorgputool` 是装在**跑任务的服务器**上的 Python 命令行工具(`mon` / `monitorgputool`)。它做两件事:出事时给手机**推通知**;以及——配上 MonitorGpuTool App——把任务的**实时画面**推到手机,让你能看、能远程操作。
+`runmon` 是装在**跑任务的服务器**上的 Python 命令行工具(`mon`)。它做两件事:出事时给手机**推通知**;以及——配上 RunMon App——把任务的**实时画面**推到手机,让你能看、能远程操作。
 
 ## 安装
 
 ```bash
-pip install monitorgputool
+pip install runmon
 ```
 
 需要 Python ≥ 3.10。GPU 指标依赖 NVIDIA NVML;没有 GPU 的机器上自动降级(其余功能不受影响)。
 
-> **conda 用户:** `mon` 是系统级工具,不用装进每个虚拟环境 —— 用 `pipx install monitorgputool` 装一次全局可用,切换环境不用重装。
+> **conda 用户:** `mon` 是系统级工具,不用装进每个虚拟环境 —— 用 `pipx install runmon` 装一次全局可用,切换环境不用重装。
 
 ---
 
@@ -26,7 +26,7 @@ pip install monitorgputool
 
 ### A · 只要通知 —— 不装 App、不用 relay
 
-最轻的用法:你只想"任务跑完/挂了/假死时手机响一下"。**不需要 MonitorGpuTool App** —— 通知直接进你手机上已有的 ntfy / Bark / 企业微信 / Telegram。
+最轻的用法:你只想"任务跑完/挂了/假死时手机响一下"。**不需要 RunMon App** —— 通知直接进你手机上已有的 ntfy / Bark / 企业微信 / Telegram。
 
 ```bash
 # 1. 配一个通道(选一个)
@@ -40,9 +40,9 @@ mon run -- python train.py
 
 完事——下面的六类事件就会推到你手机。
 
-### B · 手机看实时画面 —— MonitorGpuTool App + relay
+### B · 手机看实时画面 —— RunMon App + relay
 
-完整体验:在 MonitorGpuTool App 里看**实时终端**、资源曲线、进度/ETA,还能**远程操作**任务。
+完整体验:在 RunMon App 里看**实时终端**、资源曲线、进度/ETA,还能**远程操作**任务。
 
 ```bash
 # 1. 与 App 配对(只做一次)。会打印二维码,用 App 扫。
@@ -70,7 +70,7 @@ mon run -- python train.py
 | `mon wait` | 蹲 GPU 空位:空出来手机响;带命令则等到后自动开跑(预约执行) |
 | `mon attach` | 接管已经在 tmux 里跑的任务 —— 不用重启 |
 | `mon daemon` | 保持与手机的实时连接 |
-| `mon pair` | 与 MonitorGpuTool App 配对(打印二维码) |
+| `mon pair` | 与 RunMon App 配对(打印二维码) |
 | `mon init` | 配置通知通道 |
 | `mon ls` | 列出任务(进度 / 耗时) |
 | `mon status <任务>` | 任务详情 + 输出尾部 + ETA/loss |
@@ -88,7 +88,7 @@ mon run --name exp1 --gpu 0,1 -- python train.py    # 命名任务 + 显式关�
 
 ### `mon wait` —— 蹲卡 & 预约执行
 
-卡都被占着?让 MonitorGpuTool 帮你盯,空出来第一时间手机响;带上命令还能等到后直接开跑:
+卡都被占着?让 RunMon 帮你盯,空出来第一时间手机响;带上命令还能等到后直接开跑:
 
 ```bash
 mon wait --gpus 2 --free-gb 30 -d       # 2 张卡各空出 30GB 显存 → 手机马上响(-d 后台蹲)
@@ -130,7 +130,7 @@ nohup mon daemon > ~/mon-daemon.log 2>&1 &
 mon pair                                  # 用默认公共中转;打印二维码
 mon pair --relay https://你的relay地址     # 指向你自建的 relay
 ```
-用 MonitorGpuTool App 扫打印出来的二维码,就把这台服务器和你手机绑定了。每台服务器配一次即可。
+用 RunMon App 扫打印出来的二维码,就把这台服务器和你手机绑定了。每台服务器配一次即可。
 
 ### `mon logs` —— 跟随输出
 
@@ -161,7 +161,7 @@ mon stop exp1         # 停止(SIGINT → SIGTERM → SIGKILL)
 
 同类事件 30 分钟内只提醒一次;通知失败自动指数退避重试(最长 1 小时),本地持久化不丢。
 
-错误输出紧接着非零退出时,MonitorGpuTool 会把两者合并成一条失败通知,不会让同一次报错连续弹两次。
+错误输出紧接着非零退出时,RunMon 会把两者合并成一条失败通知,不会让同一次报错连续弹两次。
 未开启 LLM 总结时,通知只附最后 3 行非空日志;完整日志仍可在 App 中查看。
 
 ## 通知通道
@@ -178,7 +178,7 @@ mon init --webhook https://your/hook     # 通用 webhook(飞书/钉钉/自定�
 
 ## 配置
 
-配置写在 `~/.config/monitorgputool/config.toml`,阈值均可修改:
+配置写在 `~/.config/runmon/config.toml`,阈值均可修改:
 
 ```toml
 hang_gpu_minutes = 20      # 假死判定窗口
@@ -206,7 +206,7 @@ OpenAI 兼容接口把日志尾部总结成一两句话,并把错误输出和退
 enabled = true
 provider = "deepseek"
 base_url = "https://api.deepseek.com"
-api_key_env = "MONITORGPUTOOL_LLM_API_KEY"  # 推荐:Key 不写入配置文件
+api_key_env = "RUNMON_LLM_API_KEY"  # 推荐:Key 不写入配置文件
 model = "deepseek-v4-flash"
 timeout_s = 10
 ```
@@ -214,17 +214,17 @@ timeout_s = 10
 运行任务前把 Key 放进环境变量:
 
 ```bash
-export MONITORGPUTOOL_LLM_API_KEY="你的 API Key"
+export RUNMON_LLM_API_KEY="你的 API Key"
 mon run python train.py
 ```
 
 也可在 `[llm]` 中直接写 `api_key = "..."`;配置文件权限会保持为 `0600`。日志发送前会
 自动遮盖常见的 API Key、Token、密码和 `Authorization: Bearer` 凭证,并只截取最后
-100 行/12000 字符。日志仍会发送给你选择的 LLM 服务商,不会经过 MonitorGpuTool relay。
+100 行/12000 字符。日志仍会发送给你选择的 LLM 服务商,不会经过 RunMon relay。
 DeepSeek、通义、Kimi、OpenAI 及提供 OpenAI 兼容接口的本机 Ollama 均可使用。
 
 ## 说明
 
 - GPU 采集依赖 NVIDIA NVML,无 GPU 的机器上自动降级。
-- 每次 GPU 心跳只携带安全的进程摘要(用户、PID、进程名、CPU、内存、显存),供 App 点击查看;MonitorGpuTool 不读取进程命令行和环境变量。
+- 每次 GPU 心跳只携带安全的进程摘要(用户、PID、进程名、CPU、内存、显存),供 App 点击查看;RunMon 不读取进程命令行和环境变量。
 - 手机 App、自托管 relay、整体介绍见[仓库根 README](../README.zh-CN.md)。

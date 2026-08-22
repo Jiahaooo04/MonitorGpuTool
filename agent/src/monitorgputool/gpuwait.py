@@ -265,7 +265,7 @@ class GpuWatchManager:
         import sys
         import time
         from pathlib import Path
-        from .config import data_dir
+        from .store import data_dir
 
         env = dict(os.environ)
         env["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # Ensure CUDA device index aligns with nvidia-smi
@@ -278,7 +278,7 @@ class GpuWatchManager:
         script_file = script_dir / f"launch_{int(time.time())}_{os.getpid()}.sh"
 
         # Wrap command into step-by-step terminal execution if not already wrapped
-        if "_monitorgputool_step" in command or "_runmon_step" in command:
+        if "_runmon_step" in command:
             exec_body = command
         else:
             lines = []
@@ -290,7 +290,7 @@ class GpuWatchManager:
                     lines.append(line)
                 else:
                     escaped = line.replace("'", "'\\''")
-                    lines.append(f"_monitorgputool_step '{escaped}'")
+                    lines.append(f"_runmon_step '{escaped}'")
             exec_body = "\n".join(lines) if lines else command
 
         script_content = f"""#!/usr/bin/env bash
@@ -343,7 +343,7 @@ if [ -f "$HOME/.bashrc" ]; then
 fi
 
 # 5. Interactive terminal prompt generator and step-by-step runner
-_monitorgputool_prompt() {{
+_runmon_prompt() {{
     local _env=""
     if [ -n "$CONDA_DEFAULT_ENV" ]; then
         _env="($CONDA_DEFAULT_ENV) "
@@ -368,37 +368,33 @@ _monitorgputool_prompt() {{
     printf "\\033[00m%s\\033[01;32m%s@%s\\033[00m:\\033[01;34m%s\\033[00m%s " "$_env" "$_u" "$_h" "$_disp_cwd" "$_sym"
 }}
 
-_monitorgputool_step() {{
+_runmon_step() {{
     local _cmd="$1"
     [ -z "$_cmd" ] && return 0
-    _monitorgputool_prompt
+    _runmon_prompt
     printf "%s\\n" "$_cmd"
     eval "$_cmd"
     local _ret=$?
     if [ $_ret -ne 0 ]; then
-        printf "\\033[01;31m[MonitorGpuTool] 步骤执行失败 (退出码: %d)\\033[00m\\n" "$_ret"
-        _monitorgputool_prompt
+        printf "\\033[01;31m[RunMon] 步骤执行失败 (退出码: %d)\\033[00m\\n" "$_ret"
+        _runmon_prompt
         printf "\\n"
         exit $_ret
     fi
     return 0
 }}
 
-# Alias for backward compatibility
-_runmon_prompt() {{ _monitorgputool_prompt; }}
-_runmon_step() {{ _monitorgputool_step "$@"; }}
-
 # 6. Sequentially execute user commands step-by-step
 {exec_body}
 
 # 7. Print concluding terminal prompt
-_monitorgputool_prompt
+_runmon_prompt
 printf "\\n"
 """
         script_file.write_text(script_content, encoding="utf-8")
         script_file.chmod(0o755)
 
-        argv = [sys.executable, "-m", "monitorgputool", "run", "--name", name or "预约任务",
+        argv = [sys.executable, "-m", "runmon", "run", "--name", name or "预约任务",
                 "--gpu", idx, "--", "bash", "-l", str(script_file)]
         try:
             subprocess.Popen(argv, cwd=os.path.expanduser("~"), env=env,

@@ -4,21 +4,21 @@
 
 </div>
 
-# MonitorGpuTool (monitorgputool)
+# runmon
 
 **Long-job companion** — when a training run, crawler, or long script is running on your server, your phone knows the moment it "finished, failed, or silently stalled." Zero-instrumentation, not a line of training code changed.
 
-`monitorgputool` is the Python CLI (`mon` / `monitorgputool`) you install on the server that runs your jobs. It does two things: it **pushes notifications** to your phone when something happens, and — paired with the MonitorGpuTool app — it streams a **live view** you can watch and remote-control from your phone.
+`runmon` is the Python CLI (`mon`) you install on the server that runs your jobs. It does two things: it **pushes notifications** to your phone when something happens, and — paired with the RunMon app — it streams a **live view** you can watch and remote-control from your phone.
 
 ## Install
 
 ```bash
-pip install monitorgputool
+pip install runmon
 ```
 
 Requires Python ≥ 3.10. GPU metrics use NVIDIA NVML; on a machine without a GPU it degrades gracefully (everything else keeps working).
 
-> **conda users:** `mon` is a system-level tool — no need to install it into every virtual env. `pipx install monitorgputool` installs it once, globally available, no reinstalling when you switch envs.
+> **conda users:** `mon` is a system-level tool — no need to install it into every virtual env. `pipx install runmon` installs it once, globally available, no reinstalling when you switch envs.
 
 ---
 
@@ -26,7 +26,7 @@ Requires Python ≥ 3.10. GPU metrics use NVIDIA NVML; on a machine without a GP
 
 ### A · Notifications only — no app, no relay
 
-The lightest setup: you just want your phone to buzz when a job finishes, fails, or stalls. **No MonitorGpuTool app needed** — notifications arrive in the ntfy / Bark / WeCom / Telegram app you already have.
+The lightest setup: you just want your phone to buzz when a job finishes, fails, or stalls. **No RunMon app needed** — notifications arrive in the ntfy / Bark / WeCom / Telegram app you already have.
 
 ```bash
 # 1. Configure a channel (pick one)
@@ -40,9 +40,9 @@ mon run -- python train.py
 
 Done — the six event types below get pushed to your phone.
 
-### B · Live monitoring on your phone — MonitorGpuTool app + relay
+### B · Live monitoring on your phone — RunMon app + relay
 
-The full experience: watch the **live terminal**, resource charts, progress/ETA, and **remote-control** the job from the MonitorGpuTool app.
+The full experience: watch the **live terminal**, resource charts, progress/ETA, and **remote-control** the job from the RunMon app.
 
 ```bash
 # 1. Pair with the app (one time). Prints a QR code — scan it in the app.
@@ -70,7 +70,7 @@ Now open the app: live terminal, GPU/CPU/memory curves, progress/loss/ETA, and b
 | `mon wait` | Camp for free GPUs: phone buzzes when cards free up; with a command, auto-start it (reserved run) |
 | `mon attach` | Take over a job already running in tmux — no restart |
 | `mon daemon` | Keep the live connection to your phone open |
-| `mon pair` | Pair with the MonitorGpuTool app (prints a QR code) |
+| `mon pair` | Pair with the RunMon app (prints a QR code) |
 | `mon init` | Configure notification channels |
 | `mon ls` | List jobs (progress / elapsed) |
 | `mon status <job>` | Job details + output tail + ETA/loss |
@@ -88,7 +88,7 @@ Progress, ETA, and loss are parsed automatically from stdout (works with tqdm / 
 
 ### `mon wait` — camp for GPUs & reserve a run
 
-All the cards taken? Let MonitorGpuTool watch them for you — your phone buzzes the moment they free up; attach a command and it auto-starts once they do:
+All the cards taken? Let RunMon watch them for you — your phone buzzes the moment they free up; attach a command and it auto-starts once they do:
 
 ```bash
 mon wait --gpus 2 --free-gb 30 -d       # phone buzzes when 2 cards each have 30GB free (-d = camp in background)
@@ -130,7 +130,7 @@ nohup mon daemon > ~/mon-daemon.log 2>&1 &
 mon pair                                  # uses the default public relay; prints a QR code
 mon pair --relay https://your-relay.com   # point at your own self-hosted relay
 ```
-Scan the printed QR code in the MonitorGpuTool app to link this server to your phone. One-time per server.
+Scan the printed QR code in the RunMon app to link this server to your phone. One-time per server.
 
 ### `mon logs` — follow output
 
@@ -161,7 +161,7 @@ mon stop exp1         # stop (SIGINT → SIGTERM → SIGKILL)
 
 The same kind of event notifies at most once per 30 minutes; failed notifications retry with exponential backoff (up to 1 hour) and are persisted locally so nothing is lost.
 
-When error output is immediately followed by a non-zero exit, MonitorGpuTool merges
+When error output is immediately followed by a non-zero exit, RunMon merges
 both signals into one failure notification instead of buzzing twice. Without
 LLM summaries enabled, that notification includes only the last three
 non-empty log lines; the full log remains available in the app.
@@ -180,7 +180,7 @@ mon init --webhook https://your/hook     # generic webhook (Feishu / DingTalk / 
 
 ## Config
 
-Config lives in `~/.config/monitorgputool/config.toml`; all thresholds are adjustable:
+Config lives in `~/.config/runmon/config.toml`; all thresholds are adjustable:
 
 ```toml
 hang_gpu_minutes = 20      # GPU-stall detection window
@@ -213,7 +213,7 @@ You can also edit the server configuration directly:
 enabled = true
 provider = "deepseek"
 base_url = "https://api.deepseek.com"
-api_key_env = "MONITORGPUTOOL_LLM_API_KEY"  # recommended: keep the key out of the file
+api_key_env = "RUNMON_LLM_API_KEY"  # recommended: keep the key out of the file
 model = "deepseek-v4-flash"
 timeout_s = 10
 ```
@@ -221,19 +221,19 @@ timeout_s = 10
 Export the key before starting the job:
 
 ```bash
-export MONITORGPUTOOL_LLM_API_KEY="your API key"
+export RUNMON_LLM_API_KEY="your API key"
 mon run python train.py
 ```
 
 You may instead set `api_key = "..."` inside `[llm]`; the config file remains
-mode `0600`. Before sending logs, MonitorGpuTool masks common API keys, tokens,
+mode `0600`. Before sending logs, RunMon masks common API keys, tokens,
 passwords, and `Authorization: Bearer` credentials, then keeps only the last
 100 lines / 12,000 characters. The log excerpt goes to the LLM provider you
-selected and never through the MonitorGpuTool relay. DeepSeek, Qwen, Kimi, OpenAI, and
+selected and never through the RunMon relay. DeepSeek, Qwen, Kimi, OpenAI, and
 local Ollama servers with an OpenAI-compatible endpoint are supported.
 
 ## Notes
 
 - GPU sampling relies on NVIDIA NVML; on machines without a GPU it degrades gracefully.
-- Each GPU heartbeat includes a safe process summary (user, PID, process name, CPU, RAM, and VRAM) for the app's tap-to-inspect sheet. MonitorGpuTool deliberately does not read process command lines or environment variables.
+- Each GPU heartbeat includes a safe process summary (user, PID, process name, CPU, RAM, and VRAM) for the app's tap-to-inspect sheet. RunMon deliberately does not read process command lines or environment variables.
 - For the phone app, self-hosting the relay, and the big picture, see the [project README](../README.md).

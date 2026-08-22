@@ -10,26 +10,22 @@ if sys.version_info >= (3, 11):
 else:
     import tomli as tomllib
 
+import tomli_w
 
 
 def config_path() -> Path:
-    if p := (os.environ.get("MONITORGPUTOOL_CONFIG") or os.environ.get("RUNMON_CONFIG")):
+    if p := os.environ.get("RUNMON_CONFIG"):
         return Path(p)
     base = Path(os.environ.get("XDG_CONFIG_HOME", str(Path.home() / ".config")))
-    p = base / "monitorgputool" / "config.toml"
-    if not p.exists() and (base / "runmon" / "config.toml").exists():
-        return base / "runmon" / "config.toml"
-    return p
+    return base / "runmon" / "config.toml"
 
 
 def data_dir() -> Path:
-    if p := (os.environ.get("MONITORGPUTOOL_DATA_DIR") or os.environ.get("RUNMON_DATA_DIR")):
+    if p := os.environ.get("RUNMON_DATA_DIR"):
         d = Path(p)
     else:
         base = Path(os.environ.get("XDG_DATA_HOME", str(Path.home() / ".local" / "share")))
-        d = base / "monitorgputool"
-        if not d.exists() and (base / "runmon").exists():
-            d = base / "runmon"
+        d = base / "runmon"
     (d / "logs").mkdir(parents=True, exist_ok=True)
     return d
 
@@ -68,7 +64,6 @@ class Config:
         return cfg
 
     def save(self, path: Path | None = None) -> None:
-        import tomli_w
         p = path or config_path()
         p.parent.mkdir(parents=True, exist_ok=True)
         data = asdict(self)
